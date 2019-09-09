@@ -1,0 +1,15 @@
+[package]
+name                                    =   "rusm"
+description                             =   "rust assembler"
+version                                 =   "0.1.0"
+authors                                 =   [ "sivizius <sivizius@ohai.su>" ]
+edition                                 =   "2018"
+
+[dependencies]
+rand                                    =   { version = "0.6",                  optional = false  }
+bitflags                                =   { version = "1.0",                  optional = false  }
+const_type                              =   { version = "0.1.1",                optional = false  }
+
+[features]
+default                                 =   []
+x86                                     =   []
