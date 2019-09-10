@@ -128,7 +128,7 @@ impl          x86instruction
   )
   ->  x86result
   {
-    self.setOpcode  ( opcode  );
-    x86result::Ready  ( self  )
+    self.setOpcode    ( opcode  );
+    x86result::Done   ( self    )
   }
 }

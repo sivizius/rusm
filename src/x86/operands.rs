@@ -320,7 +320,14 @@ impl          x86operand
 
 impl          Operand                   for x86operand
 {
-  fn this   ( self ) -> ( OperandType, usize )
+  fn this
+  (
+    self
+  )
+  ->  (
+        OperandType,
+        usize,
+      )
   {
     let     size
     = match self

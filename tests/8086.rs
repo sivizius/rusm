@@ -38,6 +38,10 @@ use rusm::
       x86version,
     },
   },
+  x87::
+  {
+    x87version,
+  },
 };
 
 use std::
@@ -67,6 +71,7 @@ fn main
       .x86config
       (
         x86version::i8086,
+        x87version::i8087,
         2,
         2,
       )

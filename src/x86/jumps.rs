@@ -132,7 +132,7 @@ impl          x86instruction
               {
                 self.setOpcode    ( opcode,               );
                 self.setImmediate ( 1,      displacement, );
-                x86result::Ready  ( self  )
+                x86result::Done   ( self                  )
               }
               else
               {

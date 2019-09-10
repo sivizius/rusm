@@ -101,7 +101,9 @@ impl          x86instruction
     opcode:                             u8,
     direction:                          bool,
     operands:                           &Vec < OperandType >,
-    state:                              &x86state,
+    version:                            x86version,
+    operandSize:                        usize,
+    _addressSize:                       usize,
   )
   ->  x86result
   {
@@ -134,25 +136,25 @@ impl          x86instruction
                 1
                 =>  {
                       self.setOpcode  ( opcode      );
-                      x86result::Ready  ( self  )
+                      x86result::Done ( self  )
                     }
                 2
                 =>  {
-                      if  state.operandSize ( ) ==  4
+                      if  operandSize ==  4
                       {
                         self.setOperandSizeOverride ( true  );
                       }
                       self.setOpcode  ( opcode  | 1 );
-                      x86result::Ready  ( self  )
+                      x86result::Done ( self  )
                     },
-                4 if  state.version ( ) >= x86version::i386
+                4 if  version >= x86version::i386
                 =>  {
-                      if  state.operandSize ( ) ==  2
+                      if  operandSize ==  2
                       {
                         self.setOperandSizeOverride ( true  );
                       }
                       self.setOpcode  ( opcode  | 1 );
-                      x86result::Ready  ( self  )
+                      x86result::Done ( self  )
                     },
                 _
                 =>  x86result::InvalidOperandSize,
@@ -184,25 +186,25 @@ impl          x86instruction
               1
               =>  {
                     self.setOpcode  ( opcode  | 8 );
-                    x86result::Ready  ( self  )
+                    x86result::Done ( self  )
                   }
               2
               =>  {
-                    if  state.operandSize ( ) ==  4
+                    if  operandSize ==  4
                     {
                       self.setOperandSizeOverride ( true  );
                     }
                     self.setOpcode  ( opcode  | 9 );
-                    x86result::Ready  ( self  )
+                    x86result::Done ( self  )
                   },
-              4 if  state.version ( ) >= x86version::i386
+              4 if  version >= x86version::i386
               =>  {
-                    if  state.operandSize ( ) ==  2
+                    if  operandSize ==  2
                     {
                       self.setOperandSizeOverride ( true  );
                     }
                     self.setOpcode  ( opcode  | 9 );
-                    x86result::Ready  ( self  )
+                    x86result::Done ( self  )
                   },
               _
               =>  x86result::InvalidOperandSize,

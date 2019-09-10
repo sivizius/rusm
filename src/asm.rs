@@ -20,7 +20,7 @@ use super::
 pub struct    asm;
 impl          asm
 {
-  /// Create an instruction-instance to add some raw bytes (8 bit).
+  /// Add some raw bytes (8 bit).
   ///
   /// # Arguments
   /// *  `data`  – list of values.
@@ -44,7 +44,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to add some raw words (16 bit).
+  /// Add some raw words (16 bit).
   ///
   /// # Arguments
   /// * `data`  – list of values.
@@ -68,7 +68,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to add some raw dwords (32 bit).
+  /// Add some raw dwords (32 bit).
   ///
   /// # Arguments
   /// * `data`  – list of values.
@@ -92,7 +92,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to add some raw qwords (64 bit).
+  /// Add some raw qwords (64 bit).
   ///
   /// # Arguments
   /// * `data`  – list of values.
@@ -116,7 +116,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to add some raw data.
+  /// Add some raw data.
   ///
   /// # Arguments
   /// * `size`  – length of each value in bytes,
@@ -142,7 +142,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to add a label which can be used to reference this point in other instructions,
+  /// Add a label which can be used to reference this point in other instructions,
   ///   but will be ignored in the generation of the raw code.
   ///
   /// # Arguments
@@ -161,7 +161,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to reserve some raw bytes (8 bit).
+  /// Reserve some raw bytes (8 bit).
   ///
   /// # Arguments
   /// *  `length` – space to be reserved in bytes.
@@ -179,7 +179,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to reserve some raw words (16 bit).
+  /// Reserve some raw words (16 bit).
   ///
   /// # Arguments
   /// *  `length` – space to be reserved in words.
@@ -197,7 +197,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to reserve some raw dwords (32 bit).
+  /// Reserve some raw dwords (32 bit).
   ///
   /// # Arguments
   /// *  `length` – space to be reserved in dwords.
@@ -215,7 +215,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to reserve some raw qwords (64 bit).
+  /// Reserve some raw qwords (64 bit).
   ///
   /// # Arguments
   /// *  `length` – space to be reserved in qwords.
@@ -233,7 +233,7 @@ impl          asm
     )
   }
 
-  /// Create an instruction-instance to add a `String`.
+  /// Add an utf8-`String`.
   ///
   /// # Arguments
   /// *  `text`  – String
@@ -260,16 +260,17 @@ impl          asm
 
 impl          Assembly
 {
-  assemblyListOperand!  ( db,   asm::db,  );
-  assemblyListOperand!  ( dw,   asm::db,  );
-  assemblyListOperand!  ( dd,   asm::db,  );
-  assemblyListOperand!  ( dq,   asm::db,  );
+  assemblyListOperand!    ( db,     asm::db,    );
+  assemblyListOperand!    ( dw,     asm::dw,    );
+  assemblyListOperand!    ( dd,     asm::dd,    );
+  assemblyListOperand!    ( dq,     asm::dq,    );
+  assemblyStringOperand!  ( label,  asm::label, );
+  assemblyOneOperand!     ( rb,     asm::rb,    );
+  assemblyOneOperand!     ( rw,     asm::rw,    );
+  assemblyOneOperand!     ( rd,     asm::rd,    );
+  assemblyOneOperand!     ( rq,     asm::rq,    );
+  assemblyStringOperand!  ( utf8,   asm::utf8,  );
 
-  /// Add some raw data.
-  ///
-  /// # Arguments
-  /// * `size`  – length of each value in bytes,
-  /// * `data`  – list of values.
   pub fn emit
   (
     self,
@@ -277,66 +278,4 @@ impl          Assembly
     data:                               Vec < impl Operand  >,
   )
   ->  Self  { self.push ( asm::emit   ( size, data, ) ) }
-
-  /// Add a label which can be used to reference this point in other instructions,
-  ///   but will be ignored in the generation of the raw code.
-  ///
-  /// # Arguments
-  /// * `name`  – symbol, that can be used in other instructions to refer to this point.
-  pub fn label
-  (
-    self,
-    name:                               String,
-  )
-  ->  Self  { self.push ( asm::label  ( name,       ) ) }
-  /// Reserve some raw bytes (8 bit).
-  ///
-  /// # Arguments
-  /// *  `length` – space to be reserved in bytes.
-  pub fn rb
-  (
-    self,
-    length:                             impl Operand,
-  )
-  ->  Self  { self.push ( asm::rb     ( length,     ) ) }
-
-  /// Reserve some raw words (16 bit).
-  ///
-  /// # Arguments
-  /// *  `length` – space to be reserved in words.
-  pub fn rw
-  (
-    self,
-    length:                             impl Operand,
-  )
-  ->  Self  { self.push ( asm::rw     ( length,     ) ) }
-
-  /// Reserve some raw dwords (32 bit).
-  ///
-  /// # Arguments
-  /// *  `length` – space to be reserved in dwords.
-  pub fn rd
-  (
-    self,
-    length:                             impl Operand,
-  )
-  ->  Self  { self.push ( asm::rd     ( length,     ) ) }
-
-  /// Reserve some raw qwords (64 bit).
-  ///
-  /// # Arguments
-  /// *  `length` – space to be reserved in qwords.
-  pub fn rq
-  (
-    self,
-    length:                             impl Operand,
-  )
-  ->  Self  { self.push ( asm::rq     ( length,     ) ) }
-
-  pub fn utf8
-  (
-    self,
-    text:                               String,
-  )
-  ->  Self  { self.push ( asm::utf8   ( text,       ) ) }
 }

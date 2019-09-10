@@ -27,6 +27,10 @@ use super::
       x86state,
     },
   },
+  x87::
+  {
+    x87,
+  },
 };
 
 /// The actual Instruction
@@ -131,7 +135,7 @@ impl        Instruction
 
     if !( self.ready )
     {
-    print!  ( "{}", self.format ( 0 ) );
+    //print!  ( "{}", self.format ( 0 ) );
       //  try to resolve expressions and labels
       for operand                       in  &mut self.operands
       {
@@ -233,7 +237,7 @@ impl        Instruction
           skip,
         }
         =>  {
-              let mut result            =   InstructionResult::Ready;
+              let mut result            =   InstructionResult::Ready  ( None  );
               let mut width             =   0;
               let mut space             =   0;
               let
@@ -301,16 +305,12 @@ impl        Instruction
                       },
                 }
               }
-              if  result  ==  InstructionResult::Ready
+              if  result  ==  InstructionResult::Ready  ( None  )
               {
                 self.width              =   width;
                 self.space              =   space;
-                InstructionResult::Ready
               }
-              else
-              {
-                result
-              }
+              result
             },
         InstructionType::WantData
         =>  {
@@ -327,7 +327,7 @@ impl        Instruction
                         let     space   =   *value  as  u64 * self.size as  u64;
                         self.width      =   0;
                         self.space      =   space;
-                        InstructionResult::Ready
+                        InstructionResult::Ready  ( None  )
                       }
                       else
                       {
@@ -364,13 +364,20 @@ impl        Instruction
             (
               architecture,
             ),
+        #[cfg(any(feature="x86"))]
+        InstructionType::x87            { ..          }
+        =>  self.x87compile
+            (
+              architecture,
+              round,
+            ),
         //_
         //=>  InstructionResult::Again.error                                              ( "Unexpected Instruction. This should not happen here!".to_string  ( ) ),
       }
     }
     else
     {
-      InstructionResult::Ready
+      InstructionResult::Ready  ( None  )
     }
   }
 
@@ -525,13 +532,22 @@ impl        Instruction
     self.this.clone ( )
   }
 
-  pub fn thisRef
+  pub fn thisRefMut
   (
     &mut self
   )
   ->  &mut InstructionType
   {
     &mut self.this
+  }
+
+  pub fn thisRef
+  (
+    &self
+  )
+  ->  &InstructionType
+  {
+    &self.this
   }
 
   pub fn width
@@ -547,11 +563,11 @@ impl        Instruction
 #[derive(PartialEq)]
 pub enum    InstructionResult
 {
-  Again,                                                        //  abstract and ready, but recompile every round.
-  Equal                                 ( u64,        u64,  ),  //  not ready, but known length
-  Error                                 ( Vec < String  >   ),  //  failure.
-  Ready,                                                        //  ready, do not have be touched ever again.
-  Rerun,                                                        //  not ready, run again.
+  Again,                                                                  //  abstract and ready, but recompile every round.
+  Equal                                 ( u64,        u64,            ),  //  not ready, but known length
+  Error                                 ( Vec < String  >             ),  //  failure.
+  Ready                                 ( Option  < Vec < String  > > ),  //  everything fine, do not have be touched ever again, but there might be warnings.
+  Rerun,                                                                  //  not ready, run again.
 }
 
 impl        InstructionResult
@@ -646,6 +662,27 @@ impl        InstructionResult
     )
   }
 
+  pub fn minimalVersion
+  (
+    self,
+    arch:                               &'static str,
+    have:                               &'static str,
+    want:                               &'static str,
+  )
+  ->  Self
+  {
+    self.error
+    (
+      format!
+      (
+        "The {}-Version Is {}, But The Minimal Version For This Instruction is {}.",
+        arch,
+        have,
+        want,
+      )
+    )
+  }
+
   pub fn notImplemented
   (
     self,
@@ -659,6 +696,23 @@ impl        InstructionResult
       (
         "{} Is Not Implented Yet, Sorry.",
         this,
+      )
+    )
+  }
+
+  pub fn noVersion
+  (
+    self,
+    architecture:                       &'static str,
+  )
+  ->  Self
+  {
+    self.error
+    (
+      format!
+      (
+        "The {}-Version Is None, Therefore No Instruction Of This Instruction Set Can Be Compiled.",
+        architecture,
       )
     )
   }
@@ -748,6 +802,12 @@ pub enum    InstructionType
   },
   #[cfg(any(feature="x86"))]
   x86prefix                             ( x86prefix         ),
+  #[cfg(any(feature="x86"))]
+  x87
+  {
+    architecture:                       x86state,
+    instruction:                        x87,
+  }
 }
 
 impl          InstructionType

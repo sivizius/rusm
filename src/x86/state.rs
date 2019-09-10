@@ -12,6 +12,10 @@ use super::
       InstructionResult,
       InstructionType,
     },
+    x87::
+    {
+      x87version,
+    },
   },
 };
 
@@ -20,7 +24,8 @@ impl          Assembly
   pub fn x86config
   (
     self,
-    version:                            x86version,
+    cpu:                                x86version,
+    fpu:                                x87version,
     operandSize:                        usize,
     addressSize:                        usize,
   )
@@ -30,7 +35,8 @@ impl          Assembly
     (
       x86prefix::config
       (
-        version,
+        cpu,
+        fpu,
         operandSize,
         addressSize,
       )
@@ -60,7 +66,8 @@ impl          Instruction
     {
       if        let x86prefix::Config
                     {
-                      version,
+                      cpu,
+                      fpu,
                       operandSize,
                       addressSize,
                     } = prefix
@@ -70,7 +77,8 @@ impl          Instruction
           (
             x86state
             {
-              version:                  *version,
+              cpu:                      *cpu,
+              fpu:                      *fpu,
               operandSize:              *operandSize,
               addressSize:              *addressSize,
               hazLock:                  false,
@@ -78,7 +86,7 @@ impl          Instruction
               theRepeat:                x86prefixByte::Default,
             },
           );
-        InstructionResult::Ready
+        InstructionResult::Ready  ( None  )
       }
       else  if  let Architecture::x86 ( ref mut state ) = architecture
       {
@@ -94,7 +102,7 @@ impl          Instruction
           x86prefix::UsuallyTaken     =>  state.theBranchHint =   x86prefixByte::BranchTaken,
           _                           =>  unreachable!  ( ),
         }
-        InstructionResult::Ready
+        InstructionResult::Ready  ( None  )
       }
       else
       {
@@ -113,7 +121,8 @@ pub enum      x86prefix
 {
   Config
   {
-    version:                            x86version,
+    cpu:                                x86version,
+    fpu:                                x87version,
     operandSize:                        usize,
     addressSize:                        usize,
   },
@@ -153,7 +162,8 @@ impl          x86prefix
 {
   pub fn config
   (
-    version:                            x86version,
+    cpu:                                x86version,
+    fpu:                                x87version,
     operandSize:                        usize,
     addressSize:                        usize,
   )
@@ -165,7 +175,8 @@ impl          x86prefix
       (
         x86prefix::Config
         {
-          version,
+          cpu,
+          fpu,
           operandSize,
           addressSize,
         }
@@ -192,6 +203,7 @@ Const!
     AddressSizeOverride                 =   0x67,
     BranchNotTaken                      =   0x2e,
     BranchTaken                         =   0x3e,
+    FWait                               =   0x9b,
     Lock                                =   0xf0,
     OperandSizeOverride                 =   0x66,
     Repeat                              =   0xf3,
@@ -227,7 +239,8 @@ impl          x86prefixByte
 #[derive(Copy,Clone,Debug,PartialEq,PartialOrd)]
 pub struct    x86state
 {
-  version:                              x86version,
+  cpu:                                  x86version,
+  fpu:                                  x87version,
   operandSize:                          usize,
   addressSize:                          usize,
   hazLock:                              bool,
@@ -242,7 +255,8 @@ pub fn x86state
 {
   x86state
   {
-    version:                            x86version::i8086,
+    cpu:                                x86version::i8086,
+    fpu:                                x87version::None,
     operandSize:                        2,
     addressSize:                        2,
     hazLock:                            false,
@@ -253,74 +267,55 @@ pub fn x86state
 
 impl          x86state
 {
-  pub fn addressSize
+  pub fn init
   (
-    &self,
+    &mut self,
+    state:                              &mut Self,
+    round:                              usize,
   )
-  ->  usize
+  ->  (
+        x86version,
+        x87version,
+        usize,
+        usize,
+        bool,
+        x86prefixByte,
+        x86prefixByte,
+      )
   {
-    self.addressSize
-  }
-
-  pub fn hazLock
-  (
-    &self
-  )
-  ->  bool
-  {
-    self.hazLock
-  }
-
-  pub fn operandSize
-  (
-    &self,
-  )
-  ->  usize
-  {
-    self.operandSize
-  }
-
-  pub fn reset
-  (
-    &mut self
-  )
-  {
-    self.hazLock                        =   false;
-    self.theBranchHint                  =   x86prefixByte::Default;
-    self.theRepeat                      =   x86prefixByte::Default;
-  }
-
-  pub fn theBranchHint
-  (
-    &self
-  )
-  ->  x86prefixByte
-  {
-    self.theBranchHint
-  }
-
-  pub fn theRepeat
-  (
-    &self
-  )
-  ->  x86prefixByte
-  {
-    self.theRepeat
-  }
-
-  pub fn version
-  (
-    &self
-  )
-  ->  x86version
-  {
-    self.version
+    //  All
+    //    optional prefixes (lock, branch hints, string repeats),
+    //    instruction-specific features (randomised operand encodings),
+    //    …
+    //  which modify the state,
+    //    should be processed in the first round,
+    //      while the initial x86-instruction has an invalid state.
+    //  Therefore this state shall be set in,
+    //    and only in,
+    //  round zero.
+    if  round ==  0
+    {
+      *self                             =   state.clone ( );
+      state.hazLock                     =   false;
+      state.theBranchHint               =   x86prefixByte::Default;
+      state.theRepeat                   =   x86prefixByte::Default;
+    }
+    (
+      self.cpu,
+      self.fpu,
+      self.operandSize,
+      self.addressSize,
+      self.hazLock,
+      self.theBranchHint,
+      self.theRepeat,
+    )
   }
 }
 
 #[derive(Copy,Clone,Debug,PartialEq,PartialOrd)]
 pub enum      x86version
 {
+  None,
   i8086,
   i186,
   i286,

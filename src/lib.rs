@@ -104,6 +104,25 @@ macro_rules!  assemblyListOperand
       }
 }
 
+macro_rules!  assemblyStringOperand
+{
+  (
+    $theName:ident,
+    $theArchitecture:ident::$theInstruction:ident,
+  )
+  =>  {
+        pub fn $theName
+        (
+          self,
+          op0:                          String,
+        )
+        ->  Self
+        {
+          self.push ( $theArchitecture::$theInstruction ( op0,              ) )
+        }
+      }
+}
+
 //#[macro_use]
 //extern  crate bitflags;
 #[macro_use]
@@ -112,10 +131,12 @@ extern  crate const_type;
 pub mod asm;
 pub mod expressions;
 pub mod instructions;
-mod     operands;
+pub mod operands;
 pub mod symbols;
 #[cfg(any(feature="x86"))]
 pub mod x86;
+#[cfg(any(feature="x86"))]
+pub mod x87;
 
 use crate::
 {
@@ -299,7 +320,7 @@ impl        Assembly
         for ctrRounds                   in  numRounds ..  self.maxRounds
         {
           let mut address               =   AssemblyAddress ( );
-          print!  ( "\n=#=#= round: {} =#=#=",  ctrRounds );
+          //print!  ( "\n=#=#= round: {} =#=#=",  ctrRounds );
           done                          =   true;
           let mut instructionList       =   vec!  ( ) as  Vec < Instruction >;
           mem::swap
@@ -344,8 +365,26 @@ impl        Assembly
                       }
                     }
                   },
-              InstructionResult::Ready
+              InstructionResult::Ready  ( warnings  )
               =>  {
+                    if  let Some  ( warnings  ) = warnings
+                    {
+                      for message       in  warnings
+                      {
+                        if  self.raiseWarning
+                            (
+                              errors,
+                              ctrRounds,
+                              message,
+                              instruction.line,
+                              instruction.this      ( ),
+                              instruction.operands  ( ),
+                            )
+                        {
+                          break         'outer;
+                        }
+                      }
+                    }
                     address.raise       ( instruction.width ( ),  instruction.space ( ),  );
                     instruction.ready   (                                                 );
                   },
@@ -392,6 +431,11 @@ impl        Assembly
         }
         else
         {
+          println!
+          (
+            "{}",
+            self.logs ( ),
+          );
           AssemblyState::Compiled ( numRounds )
         }
       }
@@ -640,12 +684,12 @@ impl        Assembly
         =>  unreachable!  ( ),
         AssemblyState::Compiled         ( _ )
         =>  {
-              println!  ( "\ngenerate…" );
+              //println!  ( "\ngenerate…" );
               let mut output            =   vec!  ( );
               let mut offset            =   None;
               for instruction           in  &self.instructions
               {
-                print!  ( "{}", instruction.format ( 0 ) );
+                //print!  ( "{}", instruction.format ( 0 ) );
                 if  let   Some  ( offset  ) = offset
                 {
                   if  let AssemblyAddress::Some
@@ -764,6 +808,55 @@ impl        Assembly
       }
     );
     ( self.maxErrors  > 0 ) &&  ( errors  >=  self.maxErrors  )
+  }
+
+  /// Adds an warning message to the list of messages.
+  ///
+  /// # Arguments
+  /// * `round`       – Round, When the Error Occured,
+  /// * `message`     – Actual Message,
+  /// * `instruction` – Instructions and
+  /// * `operands`    – Operands, Where the Error Occured.
+  pub fn raiseWarning
+  (
+    &mut self,
+    errors:                             usize,
+    round:                              usize,
+    message:                            String,
+    line:                               usize,
+    instruction:                        InstructionType,
+    operands:                           Vec < OperandType >,
+  )
+  ->  bool
+  {
+    //  TODO: Warnings = Errors?
+    if false
+    {
+      self.raiseError
+      (
+        errors,
+        round,
+        message,
+        line,
+        instruction,
+        operands,
+      )
+    }
+    else
+    {
+      self.messages.push
+      (
+        AssemblyMessage::Warning
+        {
+          round,
+          message,
+          line,
+          instruction,
+          operands,
+        }
+      );
+      false
+    }
   }
 
   /// Resets any processing of an assembly, but does not alter the list of instruction.

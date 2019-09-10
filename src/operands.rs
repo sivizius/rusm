@@ -22,26 +22,33 @@ use super::
       x86operand,
     },
   },
+  x87::
+  {
+    operands::
+    {
+      x87operand,
+    },
+  },
 };
 
-pub trait Operand
+pub trait     Operand
 {
   fn this   ( self ) -> ( OperandType, usize );
 }
 
-impl Operand                            for i128
+impl          Operand                   for i128
 {
   fn this   ( self ) -> ( OperandType,  usize,  ) { ( OperandType::Constant ( self            ), 0 ) }
 }
 
-impl Operand                            for char
+impl          Operand                   for char
 {
   fn this   ( self ) -> ( OperandType,  usize,  ) { ( OperandType::Constant ( self  as  i128  ), 0 ) }
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Clone)]
-pub enum OperandType
+pub enum      OperandType
 {
   Symbol                                ( SymbolIdentifier                  ),
   Reference                             ( SymbolReference                   ),
@@ -58,6 +65,8 @@ pub enum OperandType
   },
   #[cfg(any(feature="x86"))]
   x86                                   ( x86operand                        ),
+  #[cfg(any(feature="x86"))]
+  x87                                   ( x87operand                        ),
 }
 
 impl OperandType
@@ -125,6 +134,9 @@ impl OperandType
       =>  format! ( "@{}:{}", segment, offset ),
       #[cfg(any(feature="x86"))]
       OperandType::x86                    ( this            )
+      =>  this.format ( ),
+      #[cfg(any(feature="x86"))]
+      OperandType::x87                    ( this            )
       =>  this.format ( ),
       _
       =>  unimplemented!(),

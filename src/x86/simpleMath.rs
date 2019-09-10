@@ -97,11 +97,15 @@ impl          x86instruction
   pub fn compileSimpleMath
   (
     mut self,
+    //  Instruction
     opcode:                             u8,
     signExtension:                      bool,
     size:                               usize,
     operands:                           &Vec < OperandType >,
-    state:                              &x86state,
+    //  Assembly
+    version:                            x86version,
+    operandSize:                        usize,
+    addressSize:                        usize,
   )
   ->  x86result
   {
@@ -139,7 +143,7 @@ impl          x86instruction
                       &&  immediate <=  0xff
                       {
                         self.setOpcode                 ( opcode  | 4 );
-                        x86result::Ready  ( self  )
+                        x86result::Done ( self  )
                       }
                       else
                       {
@@ -158,11 +162,11 @@ impl          x86instruction
                       &&  immediate <=  0xffff
                       {
                         self.setOpcode                 ( opcode  | 5 );
-                        if  state.operandSize ( ) ==  4
+                        if  operandSize ==  4
                         {
                           self.setOperandSizeOverride  ( true        );
                         }
-                        x86result::Ready  ( self  )
+                        x86result::Done ( self  )
                       }
                       else
                       {
@@ -175,17 +179,17 @@ impl          x86instruction
                         }
                       }
                     },
-                4 if  state.version ( ) >= x86version::i386
+                4 if  version >= x86version::i386
                 =>  {
                       if  immediate >= -0x80000000
                       &&  immediate <=  0xffffffff
                       {
                         self.setOpcode                 ( opcode  | 5 );
-                        if  state.operandSize ( ) ==  2
+                        if  operandSize ==  2
                         {
                           self.setOperandSizeOverride  ( true        );
                         }
-                        x86result::Ready  ( self  )
+                        x86result::Done ( self  )
                       }
                       else
                       {
@@ -207,7 +211,7 @@ impl          x86instruction
               self.encodeModRegRMdata
               (
                 if  size  == 1
-                &&  state.version ( ) < x86version::amd64
+                &&  version < x86version::amd64
                 &&  false
                 //&&  self.features.hazFeature ( AssemblyFeatures::RandomOpcode )
                 //&&  rand::random()
@@ -227,7 +231,9 @@ impl          x86instruction
                 *dstRegister  as  u8  | opcode,
                 None,
                 Some  ( *immediate ),
-                state,
+                version,
+                operandSize,
+                addressSize,
               )
             },
         (
@@ -242,7 +248,7 @@ impl          x86instruction
         =>  self.encodeModRegRMdata
             (
               if  size  == 1
-              &&  state.version ( ) < x86version::amd64
+              &&  version < x86version::amd64
               &&  false
               //&&  self.features.hazFeature ( AssemblyFeatures::RandomOpcode )
               //&&  rand::random()
@@ -262,7 +268,9 @@ impl          x86instruction
               *dstRegisters as  u8  | opcode,
               Some  ( *dstDisplacement  ),
               Some  ( *immediate ),
-              state,
+              version,
+              operandSize,
+              addressSize,
             ),
         (
           OperandType::x86          ( x86operand::GeneralPurposeRegister  { size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
@@ -282,7 +290,9 @@ impl          x86instruction
                 *srcRegister  as  u8,
                 None,
                 None,
-                state,
+                version,
+                operandSize,
+                addressSize,
               )
             }
             else
@@ -297,7 +307,9 @@ impl          x86instruction
                 *dstRegister  as  u8,
                 None,
                 None,
-                state,
+                version,
+                operandSize,
+                addressSize,
               )
             },
         (
@@ -314,7 +326,9 @@ impl          x86instruction
               *srcRegisters as  u8,
               Some  ( *srcDisplacement  ),
               None,
-              state,
+              version,
+              operandSize,
+              addressSize,
             ),
         (
           OperandType::x86          ( x86operand::Memory16                { size: _,  segment:  dstSegment,   registers:  dstRegisters, displacement: dstDisplacement,  } ),
@@ -330,7 +344,9 @@ impl          x86instruction
               *dstRegisters as  u8,
               Some  ( *dstDisplacement  ),
               None,
-              state,
+              version,
+              operandSize,
+              addressSize,
             ),
         (
           _,
