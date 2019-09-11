@@ -304,18 +304,19 @@ impl        Assembly
         let mut errors                  =   0;
         let mut done                    =   false;
         let mut buffer                  =   vec!              ( );
+        let mut instructionList         =   vec!  ( ) as  Vec < Instruction >;
+        mem::swap
+        (
+          &mut  instructionList,
+          &mut  self.instructions,
+        );
         'outer:
         for ctrRounds                   in  numRounds ..  self.maxRounds
         {
           buffer.clear  ( );
           let mut address               =   AssemblyAddress ( );
           //print!  ( "\n=#=#= round: {} =#=#=",  ctrRounds );
-          let mut instructionList       =   vec!  ( ) as  Vec < Instruction >;
-          mem::swap
-          (
-            &mut  instructionList,
-            &mut  self.instructions,
-          );
+          Self::list ( &instructionList  );
           done
           = match self.compileList
                   (
@@ -330,16 +331,17 @@ impl        Assembly
               None            =>  break 'outer,
               Some  ( done  ) =>  done,
             };
-          mem::swap
-          (
-            &mut  instructionList,
-            &mut  self.instructions,
-          );
+          Self::list ( &instructionList  );
           if  done
           {
             break                       'outer;
           }
         }
+        mem::swap
+        (
+          &mut  instructionList,
+          &mut  self.instructions,
+        );
         if        errors  > 0
         {
           AssemblyState::Failed
@@ -435,6 +437,27 @@ impl        Assembly
                 }
               }
             },
+        InstructionResult::Place  ( mut instructions  )
+        =>  {
+              match self.compileList
+                    (
+                      address,
+                      symbols,
+                      output,
+                      round,
+                      errors,
+                      &mut instructions,
+                    )
+              {
+                None
+                =>  return              None,
+                Some  ( result  )
+                =>  {
+                      done              &=  result;
+                      *instruction      =   asm::asm::append  ( instructions );
+                    },
+              }
+            },
         InstructionResult::Ready  ( warnings          )
         =>  {
               if  let Some  ( warnings  ) = warnings
@@ -476,29 +499,6 @@ impl        Assembly
         =>  {
               address.invalidate  (                                         );
               done                =   false;
-            },
-        InstructionResult::Write  ( mut instructions  )
-        =>  match self.compileList
-                  (
-                    address,
-                    symbols,
-                    output,
-                    round,
-                    errors,
-                    &mut instructions,
-                  )
-            {
-              None
-              =>  return  None,
-              Some  ( result  )
-              =>  {
-                    done                &=  result;
-                    *instruction
-                    = asm::asm::append
-                      (
-                        instructions
-                      );
-                  }
             },
       }
     }
@@ -654,8 +654,15 @@ impl        Assembly
     {
       match instruction.thisRef ( )
       {
-        InstructionType::Append ( ref instructions  )
-        =>  Self::list  ( instructions  ),
+        InstructionType::asm  ( asm::asm::Append  ( ref instructions  ) )
+        =>  if  let Some  ( instructions  ) = instructions
+            {
+              Self::list  ( &instructions );
+            }
+            else
+            {
+              print!  ( "{:#}", instruction.format ( 0 ) );
+            },
         _
         =>  print!  ( "{:#}", instruction.format ( 0 ) ),
       }

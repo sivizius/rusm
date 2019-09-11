@@ -53,6 +53,7 @@ fn main
       )
       .db               ( vec!  ( 0x13, 0x37, 0x23, 0x42, 0x19, 0x96, 0x10, 0x03, ),  )
       .rw               ( 32,                                                         )
+      .file             ( -32,  Some ( 10 ), "/home/sivizius/test.md".to_string ( )   )
       .compile          (                                                             );
 
   myAssembly.toFile     ( "build/generic.bin".to_string ( ),  )?;

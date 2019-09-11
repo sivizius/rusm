@@ -9,15 +9,17 @@ use super::
   },
   symbols::
   {
-    SymbolIdentifier,
     SymbolList,
-    SymbolReference,
   },
 };
 
 #[cfg(any(feature="x86"))]
 use super::
 {
+  asm::
+  {
+    asm,
+  },
   x86::
   {
     x86,
@@ -97,16 +99,25 @@ impl        Instruction
 {
   pub fn address
   (
-    &self
+    &self,
   )
   ->  AssemblyAddress
   {
     self.address
   }
 
+  pub fn append
+  (
+    &mut self,
+    list:                               &mut  Vec < u8  >,
+  )
+  {
+    self.output.append  ( list  );
+  }
+
   pub fn bytes
   (
-    &self
+    &self,
   )
   ->  Vec < u8  >
   {
@@ -200,161 +211,16 @@ impl        Instruction
 
       match &mut self.this
       {
-        InstructionType::Append         ( instructions  )
-        =>  InstructionResult::Write  ( instructions.clone ( ) ),
-        InstructionType::EmitData
-        {
-          minimum,
-          maximum,
-          endianness:                   dataEndianness,
-          skip,
-        }
-        =>  {
-              let mut result            =   InstructionResult::Ready  ( None  );
-              let mut width             =   0;
-              let mut space             =   0;
-              let
-              (
-                lowerByte,
-                upperByte,
-              )
-              = match if  *dataEndianness ==  Endianness::Default
-                      {
-                        endianness
-                      }
-                      else
-                      {
-                        *dataEndianness
-                      }
-                {
-                  Endianness::LittleEndian  |
-                  Endianness::Default
-                  =>  (
-                        0,
-                        self.size,
-                      ),
-                  Endianness::BigEndian
-                  =>  (
-                        self.size,
-                        0,
-                      ),
-                };
-              for (
-                    count,
-                    operand,
-                  )                     in  self.operands.iter ( ).skip ( *skip ).enumerate  ( )
-              {
-                match operand
-                {
-                  OperandType::Constant     ( value ) |
-                  OperandType::Displacement ( value )
-                  =>  if  *value  <=  *maximum
-                      &&  *value  >=  *minimum
-                      {
-                        for ctr         in  lowerByte .. upperByte
-                        {
-                          self.output.push  ( ( ( *value  >>  ( 8 * ctr ) ) & 0xff  ) as  u8  );
-                        }
-                        //*skip           =   count;  //  not really necessary, but might be useful for debugging?
-                        width           +=  1;
-                        space           +=  1;
-                      }
-                      else
-                      {
-                        //*skip           =   count;  //  not really necessary, but might be useful for debugging?
-                        result          =   result.outOfBounds                          ( count,                  *value,           *minimum, *maximum,         );
-                      },
-                  _
-                  =>  if  operand.isAbstract ( )
-                      {
-                        *skip           =   count;
-                        result          =   InstructionResult::Rerun;
-                        break;
-                      }
-                      else
-                      {
-                        //*skip           =   count;  //  not really necessary, but might be useful for debugging?
-                        result          =   result.invalidArgument                      ( count                                                                 );
-                      },
-                }
-              }
-              if  let InstructionResult::Ready  ( None  ) = result
-              {
-                self.width              =   width;
-                self.space              =   space;
-              }
-              result
-            },
         InstructionType::Internal       ( _             )
         =>  InstructionResult::Again,
-        InstructionType::Label          ( identifier    )
-        =>  if  let Ok ( reference )
-                    = symbols.define
-                      (
-                        identifier.to_string  ( ),
-                        Some  ( OperandType::Address  ( address.clone ( ) ) ),
-                        round,
-                      )
-            {
-              self.this                 =   InstructionType::Reference  ( reference );
-              InstructionResult::Again
-            }
-            else
-            {
-              InstructionResult::Again.error                                            ( "Label already defined".to_string ( )                                 )
-            },
-        InstructionType::Reference      ( reference     )
-        =>  if  let Some ( error )
-                    = symbols.modify
-                      (
-                        *reference,
-                        Some  ( OperandType::Address  ( address.clone ( ) ) ),
-                        round,
-                      )
-            {
-              InstructionResult::Again.error                                            ( error.to_string ( )                                                   )
-            }
-            else
-            {
-              InstructionResult::Again
-            },
-        InstructionType::WantData
-        =>  {
-              if self.operands.len() == 1
-              {
-                let     operand         =   &self.operands  [ 0 ];
-                match operand
-                {
-                  OperandType::Constant     ( value ) |
-                  OperandType::Displacement ( value )
-                  =>  if  *value  >=  0
-                      &&  *value  <=  0xffffffffffffffff
-                      {
-                        let     space   =   *value  as  u64 * self.size as  u64;
-                        self.width      =   0;
-                        self.space      =   space;
-                        InstructionResult::Ready  ( None  )
-                      }
-                      else
-                      {
-                        InstructionResult::Again.outOfBounds                            ( 0,                      *value,           0,  0xffffffffffffffff,     )
-                      },
-                  _
-                  =>  if  operand.isAbstract ( )
-                      {
-                        InstructionResult::Rerun
-                      }
-                      else
-                      {
-                        InstructionResult::Again.invalidArgument                        ( 1,                                                                    )
-                      },
-                }
-              }
-              else
-              {
-                InstructionResult::Again.invalidNumberOfArguments                       ( self.operands.len(),    1,                                            )
-              }
-            },
+        InstructionType::asm            ( _             )
+        =>  self.asmCompile
+            (
+              address,
+              symbols,
+              endianness,
+              round,
+            ),
         #[cfg(any(feature="x86"))]
         InstructionType::x86            { ..            }
         =>  self.x86compile
@@ -456,7 +322,7 @@ impl        Instruction
 
   pub fn operands
   (
-    &self
+    &self,
   )
   ->  Vec < OperandType >
   {
@@ -465,7 +331,7 @@ impl        Instruction
 
   pub fn operandsNumber
   (
-    &self
+    &self,
   )
   ->  usize
   {
@@ -474,7 +340,7 @@ impl        Instruction
 
   pub fn operandsRef
   (
-    &self
+    &self,
   )
   ->  &Vec < OperandType >
   {
@@ -511,7 +377,7 @@ impl        Instruction
 
   pub fn size
   (
-    &self
+    &self,
   )
   ->  usize
   {
@@ -520,7 +386,7 @@ impl        Instruction
 
   pub fn space
   (
-    &self
+    &self,
   )
   ->  u64
   {
@@ -529,7 +395,7 @@ impl        Instruction
 
   pub fn this
   (
-    &self
+    &self,
   )
   ->  InstructionType
   {
@@ -538,7 +404,7 @@ impl        Instruction
 
   pub fn thisRefMut
   (
-    &mut self
+    &mut self,
   )
   ->  &mut InstructionType
   {
@@ -547,16 +413,25 @@ impl        Instruction
 
   pub fn thisRef
   (
-    &self
+    &self,
   )
   ->  &InstructionType
   {
     &self.this
   }
 
+  pub fn thisSet
+  (
+    &mut self,
+    instruction:                        InstructionType,
+  )
+  {
+    self.this                           =   instruction;
+  }
+
   pub fn width
   (
-    &self
+    &self,
   )
   ->  u64
   {
@@ -571,7 +446,7 @@ pub enum    InstructionResult
   Error                                 ( Vec     < String  >         ),  //  failure.
   Ready                                 ( Option  < Vec < String  > > ),  //  everything fine, do not have be touched ever again, but there might be warnings.
   Rerun,                                                                  //  not ready, run again.
-  Write                                 ( Vec     < Instruction >     ),  //  append these instruction here.
+  Place                                 ( Vec     < Instruction     > ),  //  append these instruction here.
 }
 
 impl        InstructionResult
@@ -787,18 +662,8 @@ impl        InstructionResult
 #[derive(Clone,Debug)]
 pub enum    InstructionType
 {
-  Label                                 ( SymbolIdentifier    ),
-  Reference                             ( SymbolReference     ),
-  EmitData
-  {
-    minimum:                            i128,
-    maximum:                            i128,
-    endianness:                         Endianness,
-    skip:                               usize,
-  },
-  WantData,
-  Append                                ( Vec < Instruction > ),
   Internal                              ( &'static str        ),
+  asm                                   ( asm                 ),
   #[cfg(any(feature="x86"))]
   x86
   {
