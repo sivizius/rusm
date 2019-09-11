@@ -244,25 +244,6 @@ pub fn        Assembly
 
 impl        Assembly
 {
-  /// Consumes a list of instructions and appends them to the list of `instructions`.
-  ///
-  /// # Arguments
-  /// * `list`  – List of Instructions.
-  pub fn append
-  (
-    mut self,
-    list:                               Vec < Instruction >,
-  )
-  ->  Self
-  {
-    for mut instruction                 in  list
-    {
-      instruction.line                  =   self.lines;
-      self.lines                        +=  1;
-      self.instructions.push  ( instruction );
-    }
-    self
-  }
 
   /// Returns a boxed slice of the raw bytes, if possible.
   pub fn bytes
@@ -277,11 +258,17 @@ impl        Assembly
   {
     match &self.state
     {
-      AssemblyState::Uncompiled ( _ ) |
-      AssemblyState::Compiled   ( _ )
-      =>  Err ( "Assembly Has to Be Compiled and Processed Before It Can Be USed.".to_string  ( ) ),
-      AssemblyState::Processed  ( bytes )
-      =>  Ok  ( bytes.clone ( ).into_boxed_slice  ( ) ),
+      AssemblyState::Uncompiled ( _   )
+      =>  Err ( "Assembly Has to Be Compiled Before It Can Be USed.".to_string  ( ) ),
+      AssemblyState::Compiled
+      {
+        rounds:                         _,
+        output,
+      }
+      =>  Ok
+          (
+            output.clone ( ).into_boxed_slice  ( )
+          ),
       AssemblyState::Failed
       {
         round:                          _,
@@ -311,90 +298,38 @@ impl        Assembly
   ->  Self
   {
     self.state
-    = if  let AssemblyState::Uncompiled ( mut numRounds ) = self.state
+    = if  let AssemblyState::Uncompiled ( numRounds ) = self.state
       {
-        let mut symbols                 =   SymbolList      ( );
+        let mut symbols                 =   SymbolList        ( );
         let mut errors                  =   0;
         let mut done                    =   false;
+        let mut buffer                  =   vec!              ( );
         'outer:
         for ctrRounds                   in  numRounds ..  self.maxRounds
         {
+          buffer.clear  ( );
           let mut address               =   AssemblyAddress ( );
           //print!  ( "\n=#=#= round: {} =#=#=",  ctrRounds );
-          done                          =   true;
           let mut instructionList       =   vec!  ( ) as  Vec < Instruction >;
           mem::swap
           (
             &mut  instructionList,
             &mut  self.instructions,
           );
-          for instruction               in  &mut instructionList
-          {
-            match instruction.compile
+          done
+          = match self.compileList
                   (
                     &mut address,
                     &mut symbols,
-                    self.endianness,
-                    &mut self.architecture,
+                    &mut buffer,
                     ctrRounds,
+                    &mut errors,
+                    &mut instructionList,
                   )
             {
-              InstructionResult::Again
-              =>  { },
-              InstructionResult::Equal  ( width,  space )
-              =>  {
-                    address.raise       ( width,                  space,                  );
-                    done                =   false;
-                  }
-              InstructionResult::Error  ( messages      )
-              =>  {
-                    errors              +=  1;
-                    for error           in  messages
-                    {
-                      if  self.raiseError
-                          (
-                            errors,
-                            ctrRounds,
-                            error,
-                            instruction.line,
-                            instruction.this      ( ),
-                            instruction.operands  ( ),
-                          )
-                      {
-                        break           'outer;
-                      }
-                    }
-                  },
-              InstructionResult::Ready  ( warnings  )
-              =>  {
-                    if  let Some  ( warnings  ) = warnings
-                    {
-                      for message       in  warnings
-                      {
-                        if  self.raiseWarning
-                            (
-                              errors,
-                              ctrRounds,
-                              message,
-                              instruction.line,
-                              instruction.this      ( ),
-                              instruction.operands  ( ),
-                            )
-                        {
-                          break         'outer;
-                        }
-                      }
-                    }
-                    address.raise       ( instruction.width ( ),  instruction.space ( ),  );
-                    instruction.ready   (                                                 );
-                  },
-              InstructionResult::Rerun
-              =>  {
-                    address.wreck       (                                         );
-                    done                =   false;
-                  },
+              None            =>  break 'outer,
+              Some  ( done  ) =>  done,
             };
-          }
           mem::swap
           (
             &mut  instructionList,
@@ -402,7 +337,6 @@ impl        Assembly
           );
           if  done
           {
-            numRounds                   =   ctrRounds;
             break                       'outer;
           }
         }
@@ -436,7 +370,11 @@ impl        Assembly
             "{}",
             self.logs ( ),
           );
-          AssemblyState::Compiled ( numRounds )
+          AssemblyState::Compiled
+          {
+            rounds:                     numRounds,
+            output:                     buffer,
+          }
         }
       }
       else
@@ -444,6 +382,127 @@ impl        Assembly
         self.state
       };
     self
+  }
+
+  fn compileList
+  (
+    &mut self,
+    address:                            &mut  AssemblyAddress,
+    symbols:                            &mut  SymbolList,
+    output:                             &mut  Vec < u8          >,
+    round:                              usize,
+    errors:                             &mut  usize,
+    instructionList:                    &mut  Vec < Instruction >,
+  )
+  ->  Option  < bool  >
+  {
+    let mut done                        =   true;
+    for instruction                     in  instructionList
+    {
+      match instruction.compile
+            (
+              address,
+              symbols,
+              output,
+              self.endianness,
+              &mut self.architecture,
+              round,
+            )
+      {
+        InstructionResult::Again
+        =>  { },
+        InstructionResult::Equal  ( width,  space     )
+        =>  {
+              address.append      ( width,                  space,                  );
+              done                      =   false;
+            }
+        InstructionResult::Error  ( messages          )
+        =>  {
+              *errors                   +=  1;
+              for error                 in  messages
+              {
+                if  self.raiseError
+                    (
+                      *errors,
+                      round,
+                      error,
+                      instruction.line,
+                      instruction.this      ( ),
+                      instruction.operands  ( ),
+                    )
+                {
+                  return                None;
+                }
+              }
+            },
+        InstructionResult::Ready  ( warnings          )
+        =>  {
+              if  let Some  ( warnings  ) = warnings
+              {
+                for message             in  warnings
+                {
+                  if  self.raiseWarning
+                      (
+                        *errors,
+                        round,
+                        message,
+                        instruction.line,
+                        instruction.this      ( ),
+                        instruction.operands  ( ),
+                      )
+                  {
+                    return              None;
+                  }
+                }
+              }
+              if  let Some  ( pointer ) = address.ptrFile ( )
+              {
+                let mut buffer          =   instruction.bytes ( );
+                let     length          =   buffer.len        ( );
+                if  length  > 0
+                {
+                  output.resize
+                  (
+                    pointer as  usize,
+                    0x00,
+                  );
+                  output.append ( &mut  buffer  );
+                }
+              }
+              address.append      ( instruction.width ( ),  instruction.space ( ),  );
+              instruction.ready   (                                                 );
+            },
+        InstructionResult::Rerun
+        =>  {
+              address.invalidate  (                                         );
+              done                =   false;
+            },
+        InstructionResult::Write  ( mut instructions  )
+        =>  match self.compileList
+                  (
+                    address,
+                    symbols,
+                    output,
+                    round,
+                    errors,
+                    &mut instructions,
+                  )
+            {
+              None
+              =>  return  None,
+              Some  ( result  )
+              =>  {
+                    done                &=  result;
+                    *instruction
+                    = asm::asm::append
+                      (
+                        instructions
+                      );
+                  }
+            },
+      }
+    }
+    Some  ( done  )
   }
 
   pub fn hexDump
@@ -461,12 +520,15 @@ impl        Assembly
   {
     match &self.state
     {
-      AssemblyState::Uncompiled ( _ ) |
-      AssemblyState::Compiled   ( _ )
-      =>  Err ( "Assembly Has to Be Compiled and Processed Before It Can Be USed.".to_string  ( ) ),
-      AssemblyState::Processed  ( bytes )
+      AssemblyState::Uncompiled ( _   )
+      =>  Err ( "Assembly Has to Be Compiled Before It Can Be USed.".to_string  ( ) ),
+      AssemblyState::Compiled
+      {
+        rounds:                         _,
+        output,
+      }
       =>  {
-            let     size                =   bytes.len ( );
+            let     size                =   output.len ( );
             if  offset  <=  size
             {
               if  length  ==  0
@@ -483,13 +545,13 @@ impl        Assembly
                     print!
                     (
                       "{:02x} ",
-                      bytes [ offset  + width * line  + pos ],
+                      output  [ offset  + width * line  + pos ],
                     );
                   }
                   print!  ( "| " );
                   for pos               in  0 ..  width
                   {
-                    let     char        =   bytes [ offset  + width * line  + pos ];
+                    let     char        =   output  [ offset  + width * line  + pos ];
                     if  (
                           char  >=  0x20
                         &&
@@ -518,7 +580,7 @@ impl        Assembly
                     print!
                     (
                       "{:02x} ",
-                      bytes [ offset + width * lines + pos ],
+                      output  [ offset + width * lines + pos ],
                     );
                   }
                   print!
@@ -529,7 +591,7 @@ impl        Assembly
                   );
                   for pos               in  0 ..  remainder
                   {
-                    let char            =   bytes [ offset  + width * lines + pos ];
+                    let char            =   output  [ offset  + width * lines + pos ];
                     if  (
                           char  >=  0x20
                         &&
@@ -580,6 +642,23 @@ impl        Assembly
               )
             )
           },
+    }
+  }
+
+  pub fn list
+  (
+    instructions:                       &Vec  < Instruction >,
+  )
+  {
+    for instruction                     in  instructions
+    {
+      match instruction.thisRef ( )
+      {
+        InstructionType::Append ( ref instructions  )
+        =>  Self::list  ( instructions  ),
+        _
+        =>  print!  ( "{:#}", instruction.format ( 0 ) ),
+      }
     }
   }
 
@@ -666,97 +745,6 @@ impl        Assembly
           };
     }
     output
-  }
-
-  /// Gathers the raw binary code of each compiled instruction.
-  /// The actual output can be obtained calling `bytes()`.
-  pub fn process
-  (
-    mut self,
-  )
-  ->  Self
-  {
-    self                                =   self.compile  ( );
-    self.state
-    = match self.state
-      {
-        AssemblyState::Uncompiled       ( _ )
-        =>  unreachable!  ( ),
-        AssemblyState::Compiled         ( _ )
-        =>  {
-              //println!  ( "\ngenerate…" );
-              let mut output            =   vec!  ( );
-              let mut offset            =   None;
-              for instruction           in  &self.instructions
-              {
-                //print!  ( "{}", instruction.format ( 0 ) );
-                if  let   Some  ( offset  ) = offset
-                {
-                  if  let AssemblyAddress::Some
-                          {
-                            base:       _,
-                            offs,
-                            size,
-                          } = instruction.address ( )
-                  {
-                    if  size > 0
-                    {
-                      output.resize ( ( offs  - offset  ) as  usize,  0x00  );
-                    }
-                  }
-                }
-                else
-                {
-                  if  let AssemblyAddress::Some
-                          {
-                            base,
-                            offs:       _,
-                            size:       _,
-                          } = instruction.address ( )
-                  {
-                    offset                =   Some  ( base  );
-                  }
-                }
-                output.append ( &mut instruction.bytes  ( ) );
-              }
-              AssemblyState::Processed  ( output  )
-            },
-        AssemblyState::Processed        ( _ )
-        =>  self.state,
-        AssemblyState::Failed
-        {
-          round,
-          ref mut source,
-          ref mut message,
-        }
-        =>  {
-              let mut oldSource         =   "process";
-              mem::swap
-              (
-                source,
-                &mut  oldSource,
-              );
-              let mut oldMessage        =   "Cannot Process an Already Failed Assembly.".to_string  ( );
-              mem::swap
-              (
-                message,
-                &mut  oldMessage,
-              );
-              let     line              =   self.lines;
-              let     _
-              = self.raiseError
-                (
-                  0,
-                  round,
-                  oldMessage,
-                  line,
-                  InstructionType::Internal ( oldSource ),
-                  vec!  ( ),
-                );
-              self.state
-            },
-      };
-    self
   }
 
   /// Appends a single instruction to the list of `instructions`.
@@ -884,13 +872,16 @@ impl        Assembly
   {
     match &self.state
     {
-      AssemblyState::Uncompiled ( _ ) |
-      AssemblyState::Compiled   ( _ )
-      =>  Err ( "Assembly Has to Be Compiled and Processed Before It Can Be USed.".to_string  ( ) ),
-      AssemblyState::Processed  ( bytes )
+      AssemblyState::Uncompiled ( _   )
+      =>  Err ( "Assembly Has to Be Compiled Before It Can Be USed.".to_string  ( ) ),
+      AssemblyState::Compiled
+      {
+        rounds:                         _,
+        output,
+      }
       =>  {
             let mut file                =   File::create  ( fileName  ).map_err ( | e | e.to_string ( ) )?;
-            file.write_all  ( &bytes  ).map_err ( | e | e.to_string ( ) )?;
+            file.write_all  ( &output ).map_err ( | e | e.to_string ( ) )?;
             file.sync_data  (         ).map_err ( | e | e.to_string ( ) )
           },
       AssemblyState::Failed
@@ -915,7 +906,7 @@ impl        Assembly
   }
 }
 
-#[derive(Clone,Copy,PartialEq)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 pub enum    AssemblyAddress
 {
   None,
@@ -924,6 +915,7 @@ pub enum    AssemblyAddress
     base:                               u64,
     offs:                               u64,
     size:                               u64,
+    file:                               u64,
   },
 }
 
@@ -937,12 +929,41 @@ pub fn      AssemblyAddress
     base:                               0,
     offs:                               0,
     size:                               0,
+    file:                               0,
   }
 }
 
 impl        AssemblyAddress
 {
-  pub fn delta
+  pub fn append
+  (
+    &mut self,
+    width:                              u64,
+    space:                              u64,
+  )
+  {
+    if  let AssemblyAddress::Some
+            {
+              base:                     _,
+              ref mut offs,
+              ref mut size,
+              ref mut file,
+            } = self
+    {
+      *file                             +=  space;
+      if  width > 0
+      {
+        *size                           =   *offs + width;
+        *offs                           =   *offs + space;
+      }
+      else
+      {
+        *offs                           =   *offs + space;
+      }
+    }
+  }
+
+  pub fn distanceMemory
   (
     &self,
     this:                               AssemblyAddress,
@@ -964,12 +985,14 @@ impl        AssemblyAddress
           base:                         selfBase,
           offs:                         selfOffs,
           size:                         _,
+          file:                         _,
         },
         AssemblyAddress::Some
         {
           base:                         thisBase,
           offs:                         thisOffs,
           size:                         _,
+          file:                         _,
         },
       )
       =>  Some
@@ -992,16 +1015,18 @@ impl        AssemblyAddress
               base,
               offs,
               size,
+              file,
             } = self
     {
       Some
       (
         format!
         (
-          "base=0x{:04x}, offs=0x{:04x}, size=0x{:04x}",
+          "base=0x{:04x}, offs=0x{:04x}, size=0x{:04x}, file=0x{:04x}",
           base,
           offs,
           size,
+          file,
         )
       )
     }
@@ -1011,38 +1036,83 @@ impl        AssemblyAddress
     }
   }
 
-  pub fn raise
-  (
-    &mut self,
-    width:                              u64,
-    space:                              u64,
-  )
-  {
-    if  let AssemblyAddress::Some
-            {
-              base:                     _,
-              ref mut offs,
-              ref mut size,
-            } = self
-    {
-      if  width > 0
-      {
-        *size                           =   *offs + width;
-        *offs                           =   *offs + space;
-      }
-      else
-      {
-        *offs                           =   *offs + space;
-      }
-    }
-  }
-
-  pub fn wreck
+  pub fn invalidate
   (
     &mut self,
   )
   {
     *self                               =   AssemblyAddress::None;
+  }
+
+  pub fn organise
+  (
+    &mut self,
+    newBase:                            u64,
+  )
+  {
+    if  let AssemblyAddress::Some
+            {
+              ref mut base,
+              ref mut offs,
+              ref mut size,
+              ref mut file,
+            } = self
+    {
+      *file                             =   *file + *size - *offs;
+      *base                             =   newBase;
+      *offs                             =   0;
+      *size                             =   0;
+    }
+  }
+
+  pub fn ptrFile
+  (
+    &self,
+  )
+  ->  Option
+      <
+        u64,
+      >
+  {
+    if  let AssemblyAddress::Some
+            {
+              base:                     _,
+              offs:                     _,
+              size:                     _,
+              file,
+            } = self
+    {
+      Some  ( *file )
+    }
+    else
+    {
+      None
+    }
+  }
+
+  pub fn ptrMemory
+  (
+    &self,
+  )
+  ->  Option
+      <
+        u64,
+      >
+  {
+    if  let AssemblyAddress::Some
+            {
+              base,
+              offs,
+              size:                     _,
+              file:                     _,
+            } = self
+    {
+      Some  ( base  + offs  )
+    }
+    else
+    {
+      None
+    }
   }
 }
 
@@ -1070,8 +1140,11 @@ pub enum      AssemblyMessage
 pub enum      AssemblyState
 {
   Uncompiled                            ( usize       ),
-  Compiled                              ( usize       ),
-  Processed                             ( Vec < u8  > ),
+  Compiled
+  {
+    rounds:                             usize,
+    output:                             Vec < u8  >,
+  },
   Failed
   {
     round:                              usize,

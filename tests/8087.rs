@@ -88,7 +88,7 @@ fn main
       .x87fxtract (                                             )
       .x87fyl2x   (                                             )
       .x87fyl2xp1 (                                             )
-      .process    (                                             );
+      .compile    (                                             );
 
   myAssembly.toFile   ( "build/8087.bin".to_string ( ), )?;
   myAssembly.hexDump  ( 32, 0,  0,                      )?;

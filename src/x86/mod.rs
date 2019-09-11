@@ -24,6 +24,10 @@ use self::
 use super::
 {
   Architecture,
+  asm::
+  {
+    asm,
+  },
   instructions::
   {
     Instruction,
@@ -185,6 +189,7 @@ impl          Instruction
             };
           self.x86processResult
           (
+            cpu,
             hazLock,
             theBranchHint,
             theRepeat,
@@ -245,6 +250,7 @@ impl          Instruction
   pub fn x86processResult
   (
     &mut self,
+    cpu:                                x86version,
     hazLock:                            bool,
     theBranchHint:                      x86prefixByte,
     theRepeat:                          x86prefixByte,
@@ -254,7 +260,7 @@ impl          Instruction
   {
     match result
     {
-      x86result::Equal                    ( size  )
+      x86result::Equal                    ( size    )
       =>  InstructionResult::Equal
           (
             size,
@@ -270,7 +276,7 @@ impl          Instruction
           (
             "Invalid Combination of Arguments.".to_string ( )
           ),
-      x86result::InvalidDisplacement      ( disp  )
+      x86result::InvalidDisplacement      ( disp    )
       =>  InstructionResult::Again.error
           (
             format!
@@ -279,7 +285,7 @@ impl          Instruction
               disp,
             )
           ),
-      x86result::InvalidNumberOfArguments ( want  )
+      x86result::InvalidNumberOfArguments ( want    )
       =>  InstructionResult::Again.invalidNumberOfArguments
           (
             self.operandsNumber ( ),
@@ -290,7 +296,7 @@ impl          Instruction
           (
             self.size ( ),
           ),
-      x86result::JumpToFar                ( disp  )
+      x86result::JumpToFar                ( disp    )
       =>  InstructionResult::Again.error
           (
             format!
@@ -299,7 +305,14 @@ impl          Instruction
               disp,
             )
           ),
-      x86result::NotImplemented           ( name  )
+      x86result::MinimalVersion           ( version )
+      =>  InstructionResult::Again.minimalVersion
+          (
+            "x86",
+            cpu.name      ( ),
+            version.name  ( ),
+          ),
+      x86result::NotImplemented           ( name    )
       =>  InstructionResult::Again.notImplemented
           (
             format!
@@ -391,7 +404,7 @@ impl          Instruction
       =>  InstructionResult::Again.minimalVersion
           (
             "x87",
-            version.name  (),
+            version.name  ( ),
             "80387",
           ),
     }
@@ -599,7 +612,7 @@ impl          x86instruction
     }
     match size
     {
-      1
+      asm::Byte
       =>  {
             self.theOpcode              =   opcode  | 0;
             if let Some ( value ) = immediate
@@ -627,62 +640,61 @@ impl          x86instruction
               x86result::Done ( self  )
             }
           },
-      2
-      =>  {
-            if let Some ( value ) = immediate
+      asm::Word
+      =>  if let Some ( value ) = immediate
+          {
+            self.immediateValue         =   value;
+            if  operandSize ==  asm::DWord
             {
-              self.immediateValue       =   value;
-              if  operandSize ==  4
-              {
-                self.hazOperandSizeOverride
+              self.hazOperandSizeOverride
                                         =   true;
-              }
-              if        value >= -0x80
-              &&        value <=  0x7f
-              &&        (
-                          signExtension
-                        ||
-                          version >= x86version::i386
-                        )
-              //&&       !(
-              //            self.features.hazFeature ( AssemblyFeatures::RandomOpcodeSize )
-              //          &&
-              //            rand::random()
-              //          )
-              {
-                self.theOpcode          =   opcode  | 3;
-                self.immediateLength    =   1;
-                x86result::Done ( self  )
-              }
-              else  if  value >= -0x8000
-                    &&  value <=  0xffff
-              {
-                self.theOpcode          =   opcode  | 1;
-                self.immediateLength    =   2;
-                x86result::Done ( self  )
-              }
-              else
-              {
-                x86result::OutOfBounds
-                {
-                  number:               1,
-                  value:                value,
-                  minimum:              -0x8000,
-                  maximum:              0xffff,
-                }
-              }
+            }
+            if        value >= -0x80
+            &&        value <=  0x7f
+            &&        (
+                        signExtension
+                      ||
+                        version >= x86version::i386
+                      )
+            //&&       !(
+            //            self.features.hazFeature ( AssemblyFeatures::RandomOpcodeSize )
+            //          &&
+            //            rand::random()
+            //          )
+            {
+              self.theOpcode            =   opcode  | 3;
+              self.immediateLength      =   1;
+              x86result::Done ( self  )
+            }
+            else  if  value >= -0x8000
+                  &&  value <=  0xffff
+            {
+              self.theOpcode            =   opcode  | 1;
+              self.immediateLength      =   2;
+              x86result::Done ( self  )
             }
             else
             {
-              self.theOpcode            =   opcode  | 1;
-              x86result::Done ( self  )
+              x86result::OutOfBounds
+              {
+                number:                 1,
+                value:                  value,
+                minimum:                -0x8000,
+                maximum:                0xffff,
+              }
             }
+          }
+          else
+          {
+            self.theOpcode            =   opcode  | 1;
+            x86result::Done ( self  )
           },
-      4 if  version >=  x86version::i386
-      =>  {
+      asm::DWord
+      =>  if  version >=  x86version::i386
+          {
             if let Some ( value ) = immediate
             {
-              if  operandSize ==  2
+              if  operandSize ==  asm::Word
               {
                 self.hazOperandSizeOverride
                                         =   true;
@@ -723,6 +735,10 @@ impl          x86instruction
               self.theOpcode            =   opcode  | 1;
               x86result::Done ( self  )
             }
+          }
+          else
+          {
+            x86result::MinimalVersion ( x86version::i386  )
           },
       _
       =>  x86result::InvalidOperandSize,
@@ -740,6 +756,7 @@ pub enum      x86result
   InvalidNumberOfArguments              ( usize           ),
   InvalidOperandSize,
   JumpToFar                             ( i128            ),
+  MinimalVersion                        ( x86version      ),
   NotImplemented                        ( &'static str    ),
   OutOfBounds
   {

@@ -10,6 +10,10 @@ use super::
   super::
   {
     Assembly,
+    asm::
+    {
+      asm,
+    },
     instructions::
     {
       Instruction,
@@ -130,9 +134,9 @@ impl          x86instruction
               if  displacement  >= -0x80
               &&  displacement  <=  0x7f
               {
-                self.setOpcode    ( opcode,               );
-                self.setImmediate ( 1,      displacement, );
-                x86result::Done   ( self                  )
+                self.setOpcode    ( opcode,                   );
+                self.setImmediate ( asm::Byte,  displacement, );
+                x86result::Done   ( self                      )
               }
               else
               {

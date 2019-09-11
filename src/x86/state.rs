@@ -325,3 +325,26 @@ pub enum      x86version
   Pentium2,
   amd64,
 }
+
+impl          x86version
+{
+  pub fn name
+  (
+    &self,
+  )
+  ->  &'static str
+  {
+    match self
+    {
+      x86version::None      =>  "None",
+      x86version::i8086     =>  "8086",
+      x86version::i186      =>  "i186",
+      x86version::i286      =>  "i286",
+      x86version::i386      =>  "i386",
+      x86version::i486      =>  "i486",
+      x86version::Pentium   =>  "Pentium",
+      x86version::Pentium2  =>  "Pentium II",
+      x86version::amd64     =>  "amd64",
+    }
+  }
+}

@@ -13,6 +13,48 @@ use super::
   },
 };
 
+macro_rules!  asmDataInstruction {
+  (
+    $theData:ident,
+    $theResv:ident,
+    $theSize:expr,
+  )
+  =>  {
+        pub fn $theData
+        (
+          data:                         Vec < impl Operand  >,
+        )
+        -> Instruction
+        {
+          Instruction
+          (
+            InstructionType::EmitData
+            {
+              minimum:                  -1  <<  ( $theSize  * 8 - 1 ),
+              maximum:                  ( 1 <<  ( $theSize  * 8 ) ) - 1,
+              endianness:               Endianness::Default,
+              skip:                     0,
+            },
+            $theSize,
+            data.into_iter  ( ).map ( | x | ( x.this  ( ) ).0 ).collect ( ),
+          )
+        }
+        pub fn $theResv
+        (
+          length:                       impl Operand,
+        )
+        ->  Instruction
+        {
+          Instruction
+          (
+            InstructionType::WantData,
+            $theSize,
+            vec!  ( length.this ( ).0 ),
+          )
+        }
+      }
+}
+
 /// Create common instructions as standalone instructions of a pseudo instruction set.
 /// There instructions are not connected to any `Assembly`,
 ///   but could be `push`ed or `append`ed to an existing `Assembly`.
@@ -20,99 +62,50 @@ use super::
 pub struct    asm;
 impl          asm
 {
-  /// Add some raw bytes (8 bit).
-  ///
-  /// # Arguments
-  /// *  `data`  – list of values.
-  pub fn db
-  (
-    data:                               Vec < impl Operand  >,
-  )
-  ->  Instruction
-  {
-    Instruction
-    (
-      InstructionType::EmitData
-      {
-        minimum:                        -0x7f,
-        maximum:                        0xff,
-        endianness:                     Endianness::Default,
-        skip:                           0,
-      },
-      1,
-      data.into_iter  ( ).map ( | x | ( x.this  ( ) ).0 ).collect ( ),
-    )
-  }
+  pub const Byte:                 usize =   1;
+  pub const Word:                 usize =   2;
+  pub const DWord:                usize =   4;
+  pub const FWord:                usize =   6;
+  pub const PWord:                usize =   6;
+  pub const QWord:                usize =   8;
+  pub const TByte:                usize =   10;
+  pub const TWord:                usize =   10;
+  pub const DQWord:               usize =   16;
+  pub const XWord:                usize =   16;
+  pub const QQWord:               usize =   32;
+  pub const YWord:                usize =   32;
+  pub const DQQWord:              usize =   64;
+  pub const ZWord:                usize =   64;
 
-  /// Add some raw words (16 bit).
-  ///
-  /// # Arguments
-  /// * `data`  – list of values.
-  pub fn dw
-  (
-    data:                               Vec < impl Operand  >,
-  )
-  ->  Instruction
-  {
-    Instruction
-    (
-      InstructionType::EmitData
-      {
-        minimum:                        -0x7fff,
-        maximum:                        0xffff,
-        endianness:                     Endianness::Default,
-        skip:                           0,
-      },
-      2,
-      data.into_iter  ( ).map ( | x | ( x.this  ( ) ).0 ).collect ( ),
-    )
-  }
+  asmDataInstruction! ( db,   rb,   asm::Byte,    );
+  asmDataInstruction! ( dw,   rw,   asm::Word,    );
+  asmDataInstruction! ( dd,   rd,   asm::DWord,   );
+  asmDataInstruction! ( df,   rf,   asm::FWord,   );
+  asmDataInstruction! ( dp,   rp,   asm::PWord,   );
+  asmDataInstruction! ( dq,   rq,   asm::QWord,   );
+  asmDataInstruction! ( dt,   rt,   asm::TWord,   );
+  asmDataInstruction! ( ddq,  rdq,  asm::DQWord,  );
+  asmDataInstruction! ( dx,   rx,   asm::XWord,   );
+  asmDataInstruction! ( dqq,  rqq,  asm::QQWord,  );
+  asmDataInstruction! ( dy,   ry,   asm::YWord,   );
+  asmDataInstruction! ( ddqq, rdqq, asm::DQQWord, );
+  asmDataInstruction! ( dz,   rz,   asm::ZWord,   );
 
-  /// Add some raw dwords (32 bit).
+  /// Consumes a list of instructions and appends them to the list of `instructions`.
   ///
   /// # Arguments
-  /// * `data`  – list of values.
-  pub fn dd
+  /// * `list`  – List of Instructions.
+  pub fn append
   (
-    data:                               Vec < impl Operand  >,
+    list:                               Vec < Instruction >,
   )
   ->  Instruction
   {
     Instruction
     (
-      InstructionType::EmitData
-      {
-        minimum:                        -0x7fff_ffff,
-        maximum:                        0xffff_ffff,
-        endianness:                     Endianness::Default,
-        skip:                           0,
-      },
-      4,
-      data.into_iter  ( ).map ( | x | ( x.this  ( ) ).0 ).collect ( ),
-    )
-  }
-
-  /// Add some raw qwords (64 bit).
-  ///
-  /// # Arguments
-  /// * `data`  – list of values.
-  pub fn dq
-  (
-    data:                               Vec < impl Operand  >,
-  )
-  ->  Instruction
-  {
-    Instruction
-    (
-      InstructionType::EmitData
-      {
-        minimum:                        -0x7fff_ffff_ffff_ffff,
-        maximum:                        0xffff_ffff_ffff_ffff,
-        endianness:                     Endianness::Default,
-        skip:                           0,
-      },
-      8,
-      data.into_iter  ( ).map ( | x | ( x.this  ( ) ).0 ).collect ( ),
+      InstructionType::Append ( list  ),
+      0,
+      vec!  ( ),
     )
   }
 
@@ -161,78 +154,6 @@ impl          asm
     )
   }
 
-  /// Reserve some raw bytes (8 bit).
-  ///
-  /// # Arguments
-  /// *  `length` – space to be reserved in bytes.
-  pub fn rb
-  (
-    length:                             impl Operand,
-  )
-  ->  Instruction
-  {
-    Instruction
-    (
-      InstructionType::WantData,
-      1,
-      vec!  ( length.this ( ).0 ),
-    )
-  }
-
-  /// Reserve some raw words (16 bit).
-  ///
-  /// # Arguments
-  /// *  `length` – space to be reserved in words.
-  pub fn rw
-  (
-    length:                             impl Operand,
-  )
-  ->  Instruction
-  {
-    Instruction
-    (
-      InstructionType::WantData,
-      2,
-      vec!  ( length.this ( ).0 ),
-    )
-  }
-
-  /// Reserve some raw dwords (32 bit).
-  ///
-  /// # Arguments
-  /// *  `length` – space to be reserved in dwords.
-  pub fn rd
-  (
-    length:                             impl Operand,
-  )
-  ->  Instruction
-  {
-    Instruction
-    (
-      InstructionType::WantData,
-      4,
-      vec!  ( length.this ( ).0 ),
-    )
-  }
-
-  /// Reserve some raw qwords (64 bit).
-  ///
-  /// # Arguments
-  /// *  `length` – space to be reserved in qwords.
-  pub fn rq
-  (
-    length:                             impl Operand,
-  )
-  ->  Instruction
-  {
-    Instruction
-    (
-      InstructionType::WantData,
-      8,
-      vec!  ( length.this ( ).0 ),
-    )
-  }
-
   /// Add an utf8-`String`.
   ///
   /// # Arguments
@@ -260,16 +181,24 @@ impl          asm
 
 impl          Assembly
 {
-  assemblyListOperand!    ( db,     asm::db,    );
-  assemblyListOperand!    ( dw,     asm::dw,    );
-  assemblyListOperand!    ( dd,     asm::dd,    );
-  assemblyListOperand!    ( dq,     asm::dq,    );
-  assemblyStringOperand!  ( label,  asm::label, );
-  assemblyOneOperand!     ( rb,     asm::rb,    );
-  assemblyOneOperand!     ( rw,     asm::rw,    );
-  assemblyOneOperand!     ( rd,     asm::rd,    );
-  assemblyOneOperand!     ( rq,     asm::rq,    );
-  assemblyStringOperand!  ( utf8,   asm::utf8,  );
+  //assemblyOneOperand!     ( append, asm::append,  );
+  assemblyListOperand!    ( db,     asm::db,      );
+  assemblyListOperand!    ( dw,     asm::dw,      );
+  assemblyListOperand!    ( dd,     asm::dd,      );
+  assemblyListOperand!    ( dq,     asm::dq,      );
+  assemblyStringOperand!  ( label,  asm::label,   );
+  assemblyOneOperand!     ( rb,     asm::rb,      );
+  assemblyOneOperand!     ( rw,     asm::rw,      );
+  assemblyOneOperand!     ( rd,     asm::rd,      );
+  assemblyOneOperand!     ( rq,     asm::rq,      );
+  assemblyStringOperand!  ( utf8,   asm::utf8,    );
+
+  pub fn append
+  (
+    self,
+    list:                               Vec < Instruction >,
+  )
+  ->  Self  { self.push ( asm::append ( list  ) ) }
 
   pub fn emit
   (

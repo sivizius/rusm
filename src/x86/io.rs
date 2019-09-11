@@ -19,6 +19,10 @@ use super::
   super::
   {
     Assembly,
+    asm::
+    {
+      asm,
+    },
     instructions::
     {
       Instruction,
@@ -118,43 +122,48 @@ impl          x86instruction
       {
         (
           false,  //  input
-          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size,       rex:  false,  number: GeneralPurposeRegisterNumber::AX, } ),
-          OperandType::Constant ( immediate                                                                                                   ),
+          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size,             rex:  false,  number: GeneralPurposeRegisterNumber::AX, } ),
+          OperandType::Constant ( immediate                                                                                                         ),
         )
         |
         (
           true,   //  output
-          OperandType::Constant ( immediate                                                                                                   ),
-          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size,       rex:  false,  number: GeneralPurposeRegisterNumber::AX, } ),
+          OperandType::Constant ( immediate                                                                                                         ),
+          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size,             rex:  false,  number: GeneralPurposeRegisterNumber::AX, } ),
         )
         =>  if  *immediate  >=  0x00
             &&  *immediate  <=  0xff
             {
-              self.setImmediate ( 1,  *immediate, );
-              match size
+              self.setImmediate ( asm::Byte,  *immediate, );
+              match *size
               {
-                1
+                asm::Byte
                 =>  {
                       self.setOpcode  ( opcode      );
-                      x86result::Done ( self  )
+                      x86result::Done ( self        )
                     }
-                2
+                asm::Word
                 =>  {
-                      if  operandSize ==  4
+                      if  operandSize !=  asm::Word
                       {
                         self.setOperandSizeOverride ( true  );
                       }
                       self.setOpcode  ( opcode  | 1 );
-                      x86result::Done ( self  )
+                      x86result::Done ( self        )
                     },
-                4 if  version >= x86version::i386
-                =>  {
-                      if  operandSize ==  2
+                asm::DWord
+                =>  if  version >= x86version::i386
+                    {
+                      if  operandSize ==  asm::Word
                       {
                         self.setOperandSizeOverride ( true  );
                       }
                       self.setOpcode  ( opcode  | 1 );
-                      x86result::Done ( self  )
+                      x86result::Done ( self        )
+                    }
+                    else
+                    {
+                      x86result::MinimalVersion ( x86version::i386  )
                     },
                 _
                 =>  x86result::InvalidOperandSize,
@@ -172,39 +181,44 @@ impl          x86instruction
             },
         (
           false,  //  input
-          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size,       rex:  false,  number: GeneralPurposeRegisterNumber::AX, } ),
-          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size: 2,    rex:  false,  number: GeneralPurposeRegisterNumber::DX, } ),
+          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size,             rex:  false,  number: GeneralPurposeRegisterNumber::AX, } ),
+          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size: asm::Word,  rex:  false,  number: GeneralPurposeRegisterNumber::DX, } ),
         )
         |
         (
           true,   //  output
-          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size: 2,    rex:  false,  number: GeneralPurposeRegisterNumber::DX, } ),
-          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size,       rex:  false,  number: GeneralPurposeRegisterNumber::AX, } ),
+          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size: asm::Word,  rex:  false,  number: GeneralPurposeRegisterNumber::DX, } ),
+          OperandType::x86      ( x86operand::GeneralPurposeRegister  { size,             rex:  false,  number: GeneralPurposeRegisterNumber::AX, } ),
         )
-        =>  match size
+        =>  match *size
             {
-              1
+              asm::Byte
               =>  {
                     self.setOpcode  ( opcode  | 8 );
-                    x86result::Done ( self  )
+                    x86result::Done ( self        )
                   }
-              2
+              asm::Word
               =>  {
-                    if  operandSize ==  4
+                    if  operandSize !=  asm::Word
                     {
                       self.setOperandSizeOverride ( true  );
                     }
                     self.setOpcode  ( opcode  | 9 );
-                    x86result::Done ( self  )
+                    x86result::Done ( self        )
                   },
-              4 if  version >= x86version::i386
-              =>  {
-                    if  operandSize ==  2
+              asm::DWord
+              =>  if  version >= x86version::i386
+                  {
+                    if  operandSize ==  asm::Word
                     {
                       self.setOperandSizeOverride ( true  );
                     }
                     self.setOpcode  ( opcode  | 9 );
-                    x86result::Done ( self  )
+                    x86result::Done ( self        )
+                  }
+                  else
+                  {
+                    x86result::MinimalVersion ( x86version::i386  )
                   },
               _
               =>  x86result::InvalidOperandSize,

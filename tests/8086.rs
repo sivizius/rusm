@@ -108,7 +108,7 @@ fn main
       .x86out   ( 0x23,                                                         x86::al,                                            )
       .x86out   ( x86::dx,                                                      x86::ax,                                            )
       .x86out   ( x86::dx,                                                      x86::al,                                            )
-      .process  (                                                                                                                   );
+      .compile  (                                                                                                                   );
 
   myAssembly.toFile   ( "build/8086.bin".to_string ( ), )?;
   myAssembly.hexDump  ( 32, 0,  0,                      )?;

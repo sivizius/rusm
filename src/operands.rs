@@ -1,6 +1,10 @@
 use super::
 {
   AssemblyAddress,
+  instructions::
+  {
+    Instruction,
+  },
   expressions::
   {
     Expression,
@@ -31,6 +35,11 @@ use super::
   },
 };
 
+use std::
+{
+  char,
+};
+
 pub trait     Operand
 {
   fn this   ( self ) -> ( OperandType, usize );
@@ -38,16 +47,16 @@ pub trait     Operand
 
 impl          Operand                   for i128
 {
-  fn this   ( self ) -> ( OperandType,  usize,  ) { ( OperandType::Constant ( self            ), 0 ) }
+  fn this   ( self ) -> ( OperandType,  usize,  ) { ( OperandType::Constant     ( self            ), 0 ) }
 }
 
 impl          Operand                   for char
 {
-  fn this   ( self ) -> ( OperandType,  usize,  ) { ( OperandType::Constant ( self  as  i128  ), 0 ) }
+  fn this   ( self ) -> ( OperandType,  usize,  ) { ( OperandType::Constant     ( self  as  i128  ), 0 ) }
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub enum      OperandType
 {
   Symbol                                ( SymbolIdentifier                  ),
@@ -55,6 +64,7 @@ pub enum      OperandType
   Address                               ( AssemblyAddress                   ),
   Expression                            ( Expression                        ),
   Tuple                                 ( Vec               < OperandType > ),
+  Instructions                          ( Vec               < Instruction > ),
   // non-abstract
   Constant                              ( i128                              ),
   Displacement                          ( i128                              ),
@@ -120,7 +130,20 @@ impl OperandType
             format! ( "({:?})", output  )
           },
       OperandType::Constant               ( constant    )
-      =>  format! ( "({})", constant ),
+      =>  format!
+          (
+            "(0x{:x}, ›{}‹, {})",
+            constant,
+            if  let Some  ( uchar ) = char::from_u32  ( *constant as  u32 )
+            {
+              uchar
+            }
+            else
+            {
+              '.'
+            },
+            constant,
+          ),
       OperandType::Displacement           ( constant    )
       =>  if *constant < 0
           {

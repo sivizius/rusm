@@ -50,6 +50,7 @@ use super::
 ///   * `output`    – raw bytes of fully compiled instruction,
 /// * for debugging
 ///   * `line`      – line number of instruction.
+#[derive(Clone,Debug)]
 pub struct  Instruction
 {
   //  abstract instruction
@@ -125,6 +126,7 @@ impl        Instruction
     &mut self,
     address:                            &mut  AssemblyAddress,
     symbols:                            &mut  SymbolList,
+    _output:                            &mut  Vec < u8  >,
     endianness:                         Endianness,
     architecture:                       &mut  Architecture,
     round:                              usize,
@@ -135,7 +137,7 @@ impl        Instruction
 
     if !( self.ready )
     {
-    //print!  ( "{}", self.format ( 0 ) );
+      //print!  ( "{}", self.format ( 0 ) );
       //  try to resolve expressions and labels
       for operand                       in  &mut self.operands
       {
@@ -184,7 +186,7 @@ impl        Instruction
               =>  match value
                   {
                     OperandType::Address  ( destination )
-                    =>  if  let Some  ( displacement  ) = address.delta ( destination )
+                    =>  if  let Some  ( displacement  ) = address.distanceMemory  ( destination )
                         {
                           *operand      =   OperandType::Displacement ( displacement  );
                         }
@@ -198,37 +200,8 @@ impl        Instruction
 
       match &mut self.this
       {
-        InstructionType::Label          ( identifier  )
-        =>  if  let Ok ( reference )
-                    = symbols.define
-                      (
-                        identifier.to_string  ( ),
-                        Some  ( OperandType::Address  ( address.clone ( ) ) ),
-                        round,
-                      )
-            {
-              self.this                 =   InstructionType::Reference  ( reference );
-              InstructionResult::Again
-            }
-            else
-            {
-              InstructionResult::Again.error                                            ( "Label already defined".to_string ( )                                 )
-            },
-        InstructionType::Reference      ( reference   )
-        =>  if  let Some ( error )
-                    = symbols.modify
-                      (
-                        *reference,
-                        Some  ( OperandType::Address  ( address.clone ( ) ) ),
-                        round,
-                      )
-            {
-              InstructionResult::Again.error                                            ( error.to_string ( )                                                   )
-            }
-            else
-            {
-              InstructionResult::Again
-            },
+        InstructionType::Append         ( instructions  )
+        =>  InstructionResult::Write  ( instructions.clone ( ) ),
         InstructionType::EmitData
         {
           minimum,
@@ -305,12 +278,45 @@ impl        Instruction
                       },
                 }
               }
-              if  result  ==  InstructionResult::Ready  ( None  )
+              if  let InstructionResult::Ready  ( None  ) = result
               {
                 self.width              =   width;
                 self.space              =   space;
               }
               result
+            },
+        InstructionType::Internal       ( _             )
+        =>  InstructionResult::Again,
+        InstructionType::Label          ( identifier    )
+        =>  if  let Ok ( reference )
+                    = symbols.define
+                      (
+                        identifier.to_string  ( ),
+                        Some  ( OperandType::Address  ( address.clone ( ) ) ),
+                        round,
+                      )
+            {
+              self.this                 =   InstructionType::Reference  ( reference );
+              InstructionResult::Again
+            }
+            else
+            {
+              InstructionResult::Again.error                                            ( "Label already defined".to_string ( )                                 )
+            },
+        InstructionType::Reference      ( reference     )
+        =>  if  let Some ( error )
+                    = symbols.modify
+                      (
+                        *reference,
+                        Some  ( OperandType::Address  ( address.clone ( ) ) ),
+                        round,
+                      )
+            {
+              InstructionResult::Again.error                                            ( error.to_string ( )                                                   )
+            }
+            else
+            {
+              InstructionResult::Again
             },
         InstructionType::WantData
         =>  {
@@ -349,23 +355,21 @@ impl        Instruction
                 InstructionResult::Again.invalidNumberOfArguments                       ( self.operands.len(),    1,                                            )
               }
             },
-        InstructionType::Internal       ( _           )
-        =>  InstructionResult::Again,
         #[cfg(any(feature="x86"))]
-        InstructionType::x86            { ..          }
+        InstructionType::x86            { ..            }
         =>  self.x86compile
             (
               architecture,
               round,
             ),
         #[cfg(any(feature="x86"))]
-        InstructionType::x86prefix      ( _           )
+        InstructionType::x86prefix      ( _             )
         =>  self.x86prefixCompile
             (
               architecture,
             ),
         #[cfg(any(feature="x86"))]
-        InstructionType::x87            { ..          }
+        InstructionType::x87            { ..            }
         =>  self.x87compile
             (
               architecture,
@@ -560,14 +564,14 @@ impl        Instruction
   }
 }
 
-#[derive(PartialEq)]
 pub enum    InstructionResult
 {
   Again,                                                                  //  abstract and ready, but recompile every round.
-  Equal                                 ( u64,        u64,            ),  //  not ready, but known length
-  Error                                 ( Vec < String  >             ),  //  failure.
+  Equal                                 ( u64,    u64,                ),  //  not ready, but known length
+  Error                                 ( Vec     < String  >         ),  //  failure.
   Ready                                 ( Option  < Vec < String  > > ),  //  everything fine, do not have be touched ever again, but there might be warnings.
   Rerun,                                                                  //  not ready, run again.
+  Write                                 ( Vec     < Instruction >     ),  //  append these instruction here.
 }
 
 impl        InstructionResult
@@ -780,11 +784,11 @@ impl        InstructionResult
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Clone,Debug,PartialEq,PartialOrd)]
+#[derive(Clone,Debug)]
 pub enum    InstructionType
 {
-  Label                                 ( SymbolIdentifier  ),
-  Reference                             ( SymbolReference   ),
+  Label                                 ( SymbolIdentifier    ),
+  Reference                             ( SymbolReference     ),
   EmitData
   {
     minimum:                            i128,
@@ -793,7 +797,8 @@ pub enum    InstructionType
     skip:                               usize,
   },
   WantData,
-  Internal                              ( &'static str      ),
+  Append                                ( Vec < Instruction > ),
+  Internal                              ( &'static str        ),
   #[cfg(any(feature="x86"))]
   x86
   {
@@ -801,7 +806,7 @@ pub enum    InstructionType
     instruction:                        x86,
   },
   #[cfg(any(feature="x86"))]
-  x86prefix                             ( x86prefix         ),
+  x86prefix                             ( x86prefix           ),
   #[cfg(any(feature="x86"))]
   x87
   {

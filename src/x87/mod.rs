@@ -43,7 +43,7 @@ impl          Instruction
       {
         let
         (
-          _cpu,
+          cpu,
           fpu,
           _operandSize,
           _addressSize,
@@ -172,6 +172,7 @@ impl          Instruction
             };
           self.x86processResult
           (
+            cpu,
             hazLock,
             theBranchHint,
             theRepeat,

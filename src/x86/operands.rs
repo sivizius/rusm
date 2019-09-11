@@ -12,6 +12,10 @@ use super::
   },
   super::
   {
+    asm::
+    {
+      asm,
+    },
     expressions::
     {
       Expression,
@@ -164,69 +168,65 @@ impl          x86operand
         size,
         rex,
       }
-      =>  match size
+      =>  match *size
           {
-            1 =>  {
-                    match number
-                    {
-                      GeneralPurposeRegisterNumber::AX            =>  format! ( "al",                             ),
-                      GeneralPurposeRegisterNumber::CX            =>  format! ( "cl",                             ),
-                      GeneralPurposeRegisterNumber::DX            =>  format! ( "dl",                             ),
-                      GeneralPurposeRegisterNumber::BX            =>  format! ( "bl",                             ),
-                      GeneralPurposeRegisterNumber::SP  if  *rex  =>  format! ( "ah",                             ),
-                      GeneralPurposeRegisterNumber::SP            =>  format! ( "spl",                            ),
-                      GeneralPurposeRegisterNumber::BP  if  *rex  =>  format! ( "ch",                             ),  
-                      GeneralPurposeRegisterNumber::BP            =>  format! ( "bpl",                            ),
-                      GeneralPurposeRegisterNumber::SI  if  *rex  =>  format! ( "dh",                             ),
-                      GeneralPurposeRegisterNumber::SI            =>  format! ( "sil",                            ),
-                      GeneralPurposeRegisterNumber::DI  if  *rex  =>  format! ( "bh",                             ),
-                      GeneralPurposeRegisterNumber::DI            =>  format! ( "dil",                            ),
-                      _                                           =>  format! ( "r{}b",           *number as  u8, ),
-                    }
-                  },
-            2 =>  {
-                    match number
-                    {
-                      GeneralPurposeRegisterNumber::AX            =>  format! ( "ax",                             ),
-                      GeneralPurposeRegisterNumber::CX            =>  format! ( "cx",                             ),
-                      GeneralPurposeRegisterNumber::DX            =>  format! ( "dx",                             ),
-                      GeneralPurposeRegisterNumber::BX            =>  format! ( "bx",                             ),
-                      GeneralPurposeRegisterNumber::SP            =>  format! ( "sp",                             ),
-                      GeneralPurposeRegisterNumber::BP            =>  format! ( "bp",                             ),
-                      GeneralPurposeRegisterNumber::SI            =>  format! ( "si",                             ),
-                      GeneralPurposeRegisterNumber::DI            =>  format! ( "di",                             ),
-                      _                                           =>  format! ( "r{}w",           *number as  u8, ),
-                    }
-                  },
-            4 =>  {
-                    match number
-                    {
-                      GeneralPurposeRegisterNumber::AX            =>  format! ( "eax",                            ),
-                      GeneralPurposeRegisterNumber::CX            =>  format! ( "ecx",                            ),
-                      GeneralPurposeRegisterNumber::DX            =>  format! ( "edx",                            ),
-                      GeneralPurposeRegisterNumber::BX            =>  format! ( "ebx",                            ),
-                      GeneralPurposeRegisterNumber::SP            =>  format! ( "esp",                            ),
-                      GeneralPurposeRegisterNumber::BP            =>  format! ( "ebp",                            ),
-                      GeneralPurposeRegisterNumber::SI            =>  format! ( "esi",                            ),
-                      GeneralPurposeRegisterNumber::DI            =>  format! ( "edi",                            ),
-                      _                                           =>  format! ( "r{}d",           *number as  u8, ),
-                    }
-                  },
-            8 =>  {
-                    match number
-                    {
-                      GeneralPurposeRegisterNumber::AX            =>  format! ( "rax",                            ),
-                      GeneralPurposeRegisterNumber::CX            =>  format! ( "rcx",                            ),
-                      GeneralPurposeRegisterNumber::DX            =>  format! ( "rdx",                            ),
-                      GeneralPurposeRegisterNumber::BX            =>  format! ( "rbx",                            ),
-                      GeneralPurposeRegisterNumber::SP            =>  format! ( "rsp",                            ),
-                      GeneralPurposeRegisterNumber::BP            =>  format! ( "rbp",                            ),
-                      GeneralPurposeRegisterNumber::SI            =>  format! ( "rsi",                            ),
-                      GeneralPurposeRegisterNumber::DI            =>  format! ( "rdi",                            ),
-                      _                                           =>  format! ( "r{}",            *number as  u8, ),
-                    }
-                  },
-            _                                                     =>  format! ( "({})r{}?", size, *number as  u8, ),
+            asm::Byte
+            =>  match number
+                {
+                  GeneralPurposeRegisterNumber::AX            =>  format! ( "al",                             ),
+                  GeneralPurposeRegisterNumber::CX            =>  format! ( "cl",                             ),
+                  GeneralPurposeRegisterNumber::DX            =>  format! ( "dl",                             ),
+                  GeneralPurposeRegisterNumber::BX            =>  format! ( "bl",                             ),
+                  GeneralPurposeRegisterNumber::SP  if  *rex  =>  format! ( "ah",                             ),
+                  GeneralPurposeRegisterNumber::SP            =>  format! ( "spl",                            ),
+                  GeneralPurposeRegisterNumber::BP  if  *rex  =>  format! ( "ch",                             ),  
+                  GeneralPurposeRegisterNumber::BP            =>  format! ( "bpl",                            ),
+                  GeneralPurposeRegisterNumber::SI  if  *rex  =>  format! ( "dh",                             ),
+                  GeneralPurposeRegisterNumber::SI            =>  format! ( "sil",                            ),
+                  GeneralPurposeRegisterNumber::DI  if  *rex  =>  format! ( "bh",                             ),
+                  GeneralPurposeRegisterNumber::DI            =>  format! ( "dil",                            ),
+                  _                                           =>  format! ( "r{}b",           *number as  u8, ),
+                },
+            asm::Word
+            =>  match number
+                {
+                  GeneralPurposeRegisterNumber::AX            =>  format! ( "ax",                             ),
+                  GeneralPurposeRegisterNumber::CX            =>  format! ( "cx",                             ),
+                  GeneralPurposeRegisterNumber::DX            =>  format! ( "dx",                             ),
+                  GeneralPurposeRegisterNumber::BX            =>  format! ( "bx",                             ),
+                  GeneralPurposeRegisterNumber::SP            =>  format! ( "sp",                             ),
+                  GeneralPurposeRegisterNumber::BP            =>  format! ( "bp",                             ),
+                  GeneralPurposeRegisterNumber::SI            =>  format! ( "si",                             ),
+                  GeneralPurposeRegisterNumber::DI            =>  format! ( "di",                             ),
+                  _                                           =>  format! ( "r{}w",           *number as  u8, ),
+                },
+            asm::DWord
+            =>  match number
+                {
+                  GeneralPurposeRegisterNumber::AX            =>  format! ( "eax",                            ),
+                  GeneralPurposeRegisterNumber::CX            =>  format! ( "ecx",                            ),
+                  GeneralPurposeRegisterNumber::DX            =>  format! ( "edx",                            ),
+                  GeneralPurposeRegisterNumber::BX            =>  format! ( "ebx",                            ),
+                  GeneralPurposeRegisterNumber::SP            =>  format! ( "esp",                            ),
+                  GeneralPurposeRegisterNumber::BP            =>  format! ( "ebp",                            ),
+                  GeneralPurposeRegisterNumber::SI            =>  format! ( "esi",                            ),
+                  GeneralPurposeRegisterNumber::DI            =>  format! ( "edi",                            ),
+                  _                                           =>  format! ( "r{}d",           *number as  u8, ),
+                },
+            asm::QWord
+            =>  match number
+                {
+                  GeneralPurposeRegisterNumber::AX            =>  format! ( "rax",                            ),
+                  GeneralPurposeRegisterNumber::CX            =>  format! ( "rcx",                            ),
+                  GeneralPurposeRegisterNumber::DX            =>  format! ( "rdx",                            ),
+                  GeneralPurposeRegisterNumber::BX            =>  format! ( "rbx",                            ),
+                  GeneralPurposeRegisterNumber::SP            =>  format! ( "rsp",                            ),
+                  GeneralPurposeRegisterNumber::BP            =>  format! ( "rbp",                            ),
+                  GeneralPurposeRegisterNumber::SI            =>  format! ( "rsi",                            ),
+                  GeneralPurposeRegisterNumber::DI            =>  format! ( "rdi",                            ),
+                  _                                           =>  format! ( "r{}",            *number as  u8, ),
+                },
+            _                                                 =>  format! ( "({})r{}?", size, *number as  u8, ),
           },
       x86operand::Memory16
       {
@@ -238,13 +238,13 @@ impl          x86operand
       =>  format!
           (
             "{} {}:[ {}{} ]",
-            match size
+            match *size
             {
-              1 =>  "byte".to_string  ( ),
-              2 =>  "word".to_string  ( ),
-              4 =>  "dword".to_string ( ),
-              8 =>  "qword".to_string ( ),
-              _ =>  format! ( "{}", size ),
+              asm::Byte   =>  "byte".to_string  ( ),
+              asm::Word   =>  "word".to_string  ( ),
+              asm::DWord  =>  "dword".to_string ( ),
+              asm::QWord  =>  "qword".to_string ( ),
+              _           =>  format! ( "{}", size ),
             },
             segment.format  ( ),
             displacement,
@@ -268,13 +268,13 @@ impl          x86operand
         size,
       }
       =>  {
-            match size
+            match *size
             {
-               8  =>  format! ( "mm{}",             number  ),
-              16  =>  format! ( "xmm{}",            number  ),
-              32  =>  format! ( "ymm{}",            number  ),
-              64  =>  format! ( "zmm{}",            number  ),
-              _   =>  format! ( "({})mm{}?",  size, number  ),
+              asm::QWord  =>  format! ( "mm{}",             number  ),
+              asm::XWord  =>  format! ( "xmm{}",            number  ),
+              asm::YWord  =>  format! ( "ymm{}",            number  ),
+              asm::ZWord  =>  format! ( "zmm{}",            number  ),
+              _           =>  format! ( "({})mm{}?",  size, number  ),
             }
           },
       x86operand::SegmentRegister
@@ -335,11 +335,11 @@ impl          Operand                   for x86operand
         x86operand::ControlRegister
         {
           number:                       _,
-        }                               =>  4,
+        }                               =>  asm::DWord,
         x86operand::DebugRegister
         {
           number:                       _,
-        }                               =>  4,
+        }                               =>  asm::DWord,
         x86operand::GeneralPurposeRegister
         {
           number:                       _,
@@ -361,11 +361,11 @@ impl          Operand                   for x86operand
         x86operand::SegmentRegister
         {
           number:                       _,
-        }                               =>  4,
+        }                               =>  asm::DWord,
         x86operand::TestRegister
         {
           number:                       _,
-        }                               =>  4,
+        }                               =>  asm::DWord,
       };
     (
       OperandType::x86  ( self  ),

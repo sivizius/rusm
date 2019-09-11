@@ -5,6 +5,13 @@ use super::
   {
     x86operand,
   },
+  super::
+  {
+    asm::
+    {
+      asm,
+    },
+  },
 };
 
 #[derive(Clone,Copy,Debug,PartialEq,PartialOrd)]
@@ -162,115 +169,115 @@ macro_rules!  MulitMediaRegister
 
 impl          x86
 {
-  GeneralPurposeRegister! ( al,   1,  false,  GeneralPurposeRegisterNumber::AX,   );
-  GeneralPurposeRegister! ( cl,   1,  false,  GeneralPurposeRegisterNumber::CX,   );
-  GeneralPurposeRegister! ( dl,   1,  false,  GeneralPurposeRegisterNumber::DX,   );
-  GeneralPurposeRegister! ( bl,   1,  false,  GeneralPurposeRegisterNumber::BX,   );
-  GeneralPurposeRegister! ( ah,   1,  false,  GeneralPurposeRegisterNumber::SP,   );
-  GeneralPurposeRegister! ( ch,   1,  false,  GeneralPurposeRegisterNumber::BP,   );
-  GeneralPurposeRegister! ( dh,   1,  false,  GeneralPurposeRegisterNumber::SI,   );
-  GeneralPurposeRegister! ( bh,   1,  false,  GeneralPurposeRegisterNumber::DI,   );
-  GeneralPurposeRegister! ( spl,  1,  true,   GeneralPurposeRegisterNumber::SP,   );
-  GeneralPurposeRegister! ( bpl,  1,  true,   GeneralPurposeRegisterNumber::BP,   );
-  GeneralPurposeRegister! ( sil,  1,  true,   GeneralPurposeRegisterNumber::SI,   );
-  GeneralPurposeRegister! ( dil,  1,  true,   GeneralPurposeRegisterNumber::DI,   );
+  GeneralPurposeRegister! ( al,   asm::Byte,  false,  GeneralPurposeRegisterNumber::AX,   );
+  GeneralPurposeRegister! ( cl,   asm::Byte,  false,  GeneralPurposeRegisterNumber::CX,   );
+  GeneralPurposeRegister! ( dl,   asm::Byte,  false,  GeneralPurposeRegisterNumber::DX,   );
+  GeneralPurposeRegister! ( bl,   asm::Byte,  false,  GeneralPurposeRegisterNumber::BX,   );
+  GeneralPurposeRegister! ( ah,   asm::Byte,  false,  GeneralPurposeRegisterNumber::SP,   );
+  GeneralPurposeRegister! ( ch,   asm::Byte,  false,  GeneralPurposeRegisterNumber::BP,   );
+  GeneralPurposeRegister! ( dh,   asm::Byte,  false,  GeneralPurposeRegisterNumber::SI,   );
+  GeneralPurposeRegister! ( bh,   asm::Byte,  false,  GeneralPurposeRegisterNumber::DI,   );
+  GeneralPurposeRegister! ( spl,  asm::Byte,  true,   GeneralPurposeRegisterNumber::SP,   );
+  GeneralPurposeRegister! ( bpl,  asm::Byte,  true,   GeneralPurposeRegisterNumber::BP,   );
+  GeneralPurposeRegister! ( sil,  asm::Byte,  true,   GeneralPurposeRegisterNumber::SI,   );
+  GeneralPurposeRegister! ( dil,  asm::Byte,  true,   GeneralPurposeRegisterNumber::DI,   );
 
-  GeneralPurposeRegister! ( ax,   2,  false,  GeneralPurposeRegisterNumber::AX,   );
-  GeneralPurposeRegister! ( cx,   2,  false,  GeneralPurposeRegisterNumber::CX,   );
-  GeneralPurposeRegister! ( dx,   2,  false,  GeneralPurposeRegisterNumber::DX,   );
-  GeneralPurposeRegister! ( bx,   2,  false,  GeneralPurposeRegisterNumber::BX,   );
-  GeneralPurposeRegister! ( sp,   2,  false,  GeneralPurposeRegisterNumber::SP,   );
-  GeneralPurposeRegister! ( bp,   2,  false,  GeneralPurposeRegisterNumber::BP,   );
-  GeneralPurposeRegister! ( si,   2,  false,  GeneralPurposeRegisterNumber::SI,   );
-  GeneralPurposeRegister! ( di,   2,  false,  GeneralPurposeRegisterNumber::DI,   );
+  GeneralPurposeRegister! ( ax,   asm::Word,  false,  GeneralPurposeRegisterNumber::AX,   );
+  GeneralPurposeRegister! ( cx,   asm::Word,  false,  GeneralPurposeRegisterNumber::CX,   );
+  GeneralPurposeRegister! ( dx,   asm::Word,  false,  GeneralPurposeRegisterNumber::DX,   );
+  GeneralPurposeRegister! ( bx,   asm::Word,  false,  GeneralPurposeRegisterNumber::BX,   );
+  GeneralPurposeRegister! ( sp,   asm::Word,  false,  GeneralPurposeRegisterNumber::SP,   );
+  GeneralPurposeRegister! ( bp,   asm::Word,  false,  GeneralPurposeRegisterNumber::BP,   );
+  GeneralPurposeRegister! ( si,   asm::Word,  false,  GeneralPurposeRegisterNumber::SI,   );
+  GeneralPurposeRegister! ( di,   asm::Word,  false,  GeneralPurposeRegisterNumber::DI,   );
 
-  GeneralPurposeRegister! ( eax,  4,  false,  GeneralPurposeRegisterNumber::AX,   );
-  GeneralPurposeRegister! ( ecx,  4,  false,  GeneralPurposeRegisterNumber::CX,   );
-  GeneralPurposeRegister! ( edx,  4,  false,  GeneralPurposeRegisterNumber::DX,   );
-  GeneralPurposeRegister! ( ebx,  4,  false,  GeneralPurposeRegisterNumber::BX,   );
-  GeneralPurposeRegister! ( esp,  4,  false,  GeneralPurposeRegisterNumber::SP,   );
-  GeneralPurposeRegister! ( ebp,  4,  false,  GeneralPurposeRegisterNumber::BP,   );
-  GeneralPurposeRegister! ( esi,  4,  false,  GeneralPurposeRegisterNumber::SI,   );
-  GeneralPurposeRegister! ( edi,  4,  false,  GeneralPurposeRegisterNumber::DI,   );
+  GeneralPurposeRegister! ( eax,  asm::DWord, false,  GeneralPurposeRegisterNumber::AX,   );
+  GeneralPurposeRegister! ( ecx,  asm::DWord, false,  GeneralPurposeRegisterNumber::CX,   );
+  GeneralPurposeRegister! ( edx,  asm::DWord, false,  GeneralPurposeRegisterNumber::DX,   );
+  GeneralPurposeRegister! ( ebx,  asm::DWord, false,  GeneralPurposeRegisterNumber::BX,   );
+  GeneralPurposeRegister! ( esp,  asm::DWord, false,  GeneralPurposeRegisterNumber::SP,   );
+  GeneralPurposeRegister! ( ebp,  asm::DWord, false,  GeneralPurposeRegisterNumber::BP,   );
+  GeneralPurposeRegister! ( esi,  asm::DWord, false,  GeneralPurposeRegisterNumber::SI,   );
+  GeneralPurposeRegister! ( edi,  asm::DWord, false,  GeneralPurposeRegisterNumber::DI,   );
 
-  GeneralPurposeRegister! ( rax,  8,  false,  GeneralPurposeRegisterNumber::AX,   );
-  GeneralPurposeRegister! ( rcx,  8,  false,  GeneralPurposeRegisterNumber::CX,   );
-  GeneralPurposeRegister! ( rdx,  8,  false,  GeneralPurposeRegisterNumber::DX,   );
-  GeneralPurposeRegister! ( rbx,  8,  false,  GeneralPurposeRegisterNumber::BX,   );
-  GeneralPurposeRegister! ( rsp,  8,  false,  GeneralPurposeRegisterNumber::SP,   );
-  GeneralPurposeRegister! ( rbp,  8,  false,  GeneralPurposeRegisterNumber::BP,   );
-  GeneralPurposeRegister! ( rsi,  8,  false,  GeneralPurposeRegisterNumber::SI,   );
-  GeneralPurposeRegister! ( rdi,  8,  false,  GeneralPurposeRegisterNumber::DI,   );
-  GeneralPurposeRegister! ( r8,   8,  false,  GeneralPurposeRegisterNumber::R8,   );
-  GeneralPurposeRegister! ( r9,   8,  false,  GeneralPurposeRegisterNumber::R9,   );
-  GeneralPurposeRegister! ( r10,  8,  false,  GeneralPurposeRegisterNumber::R10,  );
-  GeneralPurposeRegister! ( r11,  8,  false,  GeneralPurposeRegisterNumber::R11,  );
-  GeneralPurposeRegister! ( r12,  8,  false,  GeneralPurposeRegisterNumber::R12,  );
-  GeneralPurposeRegister! ( r13,  8,  false,  GeneralPurposeRegisterNumber::R13,  );
-  GeneralPurposeRegister! ( r14,  8,  false,  GeneralPurposeRegisterNumber::R14,  );
-  GeneralPurposeRegister! ( r15,  8,  false,  GeneralPurposeRegisterNumber::R15,  );
+  GeneralPurposeRegister! ( rax,  asm::QWord, false,  GeneralPurposeRegisterNumber::AX,   );
+  GeneralPurposeRegister! ( rcx,  asm::QWord, false,  GeneralPurposeRegisterNumber::CX,   );
+  GeneralPurposeRegister! ( rdx,  asm::QWord, false,  GeneralPurposeRegisterNumber::DX,   );
+  GeneralPurposeRegister! ( rbx,  asm::QWord, false,  GeneralPurposeRegisterNumber::BX,   );
+  GeneralPurposeRegister! ( rsp,  asm::QWord, false,  GeneralPurposeRegisterNumber::SP,   );
+  GeneralPurposeRegister! ( rbp,  asm::QWord, false,  GeneralPurposeRegisterNumber::BP,   );
+  GeneralPurposeRegister! ( rsi,  asm::QWord, false,  GeneralPurposeRegisterNumber::SI,   );
+  GeneralPurposeRegister! ( rdi,  asm::QWord, false,  GeneralPurposeRegisterNumber::DI,   );
+  GeneralPurposeRegister! ( r8,   asm::QWord, false,  GeneralPurposeRegisterNumber::R8,   );
+  GeneralPurposeRegister! ( r9,   asm::QWord, false,  GeneralPurposeRegisterNumber::R9,   );
+  GeneralPurposeRegister! ( r10,  asm::QWord, false,  GeneralPurposeRegisterNumber::R10,  );
+  GeneralPurposeRegister! ( r11,  asm::QWord, false,  GeneralPurposeRegisterNumber::R11,  );
+  GeneralPurposeRegister! ( r12,  asm::QWord, false,  GeneralPurposeRegisterNumber::R12,  );
+  GeneralPurposeRegister! ( r13,  asm::QWord, false,  GeneralPurposeRegisterNumber::R13,  );
+  GeneralPurposeRegister! ( r14,  asm::QWord, false,  GeneralPurposeRegisterNumber::R14,  );
+  GeneralPurposeRegister! ( r15,  asm::QWord, false,  GeneralPurposeRegisterNumber::R15,  );
 
-  SegmentRegister!        ( cs,               SegmentRegisterNumber::CS,          );
-  SegmentRegister!        ( ss,               SegmentRegisterNumber::SS,          );
-  SegmentRegister!        ( ds,               SegmentRegisterNumber::DS,          );
-  SegmentRegister!        ( es,               SegmentRegisterNumber::ES,          );
-  SegmentRegister!        ( fs,               SegmentRegisterNumber::FS,          );
-  SegmentRegister!        ( gs,               SegmentRegisterNumber::GS,          );
+  SegmentRegister!        ( cs,                       SegmentRegisterNumber::CS,          );
+  SegmentRegister!        ( ss,                       SegmentRegisterNumber::SS,          );
+  SegmentRegister!        ( ds,                       SegmentRegisterNumber::DS,          );
+  SegmentRegister!        ( es,                       SegmentRegisterNumber::ES,          );
+  SegmentRegister!        ( fs,                       SegmentRegisterNumber::FS,          );
+  SegmentRegister!        ( gs,                       SegmentRegisterNumber::GS,          );
 
-  ControlRegister!        ( cr0,              0,                                  );
-  ControlRegister!        ( cr1,              1,                                  );
-  ControlRegister!        ( cr2,              2,                                  );
-  ControlRegister!        ( cr3,              3,                                  );
-  ControlRegister!        ( cr4,              4,                                  );
-  ControlRegister!        ( cr5,              5,                                  );
-  ControlRegister!        ( cr6,              6,                                  );
-  ControlRegister!        ( cr7,              7,                                  );
+  ControlRegister!        ( cr0,                      0,                                  );
+  ControlRegister!        ( cr1,                      1,                                  );
+  ControlRegister!        ( cr2,                      2,                                  );
+  ControlRegister!        ( cr3,                      3,                                  );
+  ControlRegister!        ( cr4,                      4,                                  );
+  ControlRegister!        ( cr5,                      5,                                  );
+  ControlRegister!        ( cr6,                      6,                                  );
+  ControlRegister!        ( cr7,                      7,                                  );
 
-  DebugRegister!          ( dr0,              0,                                  );
-  DebugRegister!          ( dr1,              1,                                  );
-  DebugRegister!          ( dr2,              2,                                  );
-  DebugRegister!          ( dr3,              3,                                  );
-  DebugRegister!          ( dr4,              4,                                  );
-  DebugRegister!          ( dr5,              5,                                  );
-  DebugRegister!          ( dr6,              6,                                  );
-  DebugRegister!          ( dr7,              7,                                  );
+  DebugRegister!          ( dr0,                      0,                                  );
+  DebugRegister!          ( dr1,                      1,                                  );
+  DebugRegister!          ( dr2,                      2,                                  );
+  DebugRegister!          ( dr3,                      3,                                  );
+  DebugRegister!          ( dr4,                      4,                                  );
+  DebugRegister!          ( dr5,                      5,                                  );
+  DebugRegister!          ( dr6,                      6,                                  );
+  DebugRegister!          ( dr7,                      7,                                  );
 
-  TestRegister!           ( tr6,              6,                                  );
-  TestRegister!           ( tr7,              7,                                  );
+  TestRegister!           ( tr6,                      6,                                  );
+  TestRegister!           ( tr7,                      7,                                  );
 
-  MulitMediaRegister!     ( mm0,  8,          0,                                  );
-  MulitMediaRegister!     ( mm1,  8,          1,                                  );
-  MulitMediaRegister!     ( mm2,  8,          2,                                  );
-  MulitMediaRegister!     ( mm3,  8,          3,                                  );
-  MulitMediaRegister!     ( mm4,  8,          4,                                  );
-  MulitMediaRegister!     ( mm5,  8,          5,                                  );
-  MulitMediaRegister!     ( mm6,  8,          6,                                  );
-  MulitMediaRegister!     ( mm7,  8,          7,                                  );
+  MulitMediaRegister!     ( mm0,  asm::QWord,         0,                                  );
+  MulitMediaRegister!     ( mm1,  asm::QWord,         1,                                  );
+  MulitMediaRegister!     ( mm2,  asm::QWord,         2,                                  );
+  MulitMediaRegister!     ( mm3,  asm::QWord,         3,                                  );
+  MulitMediaRegister!     ( mm4,  asm::QWord,         4,                                  );
+  MulitMediaRegister!     ( mm5,  asm::QWord,         5,                                  );
+  MulitMediaRegister!     ( mm6,  asm::QWord,         6,                                  );
+  MulitMediaRegister!     ( mm7,  asm::QWord,         7,                                  );
 
-  MulitMediaRegister!     ( xmm0, 16,         0,                                  );
-  MulitMediaRegister!     ( xmm1, 16,         1,                                  );
-  MulitMediaRegister!     ( xmm2, 16,         2,                                  );
-  MulitMediaRegister!     ( xmm3, 16,         3,                                  );
-  MulitMediaRegister!     ( xmm4, 16,         4,                                  );
-  MulitMediaRegister!     ( xmm5, 16,         5,                                  );
-  MulitMediaRegister!     ( xmm6, 16,         6,                                  );
-  MulitMediaRegister!     ( xmm7, 16,         7,                                  );
+  MulitMediaRegister!     ( xmm0, asm::XWord,         0,                                  );
+  MulitMediaRegister!     ( xmm1, asm::XWord,         1,                                  );
+  MulitMediaRegister!     ( xmm2, asm::XWord,         2,                                  );
+  MulitMediaRegister!     ( xmm3, asm::XWord,         3,                                  );
+  MulitMediaRegister!     ( xmm4, asm::XWord,         4,                                  );
+  MulitMediaRegister!     ( xmm5, asm::XWord,         5,                                  );
+  MulitMediaRegister!     ( xmm6, asm::XWord,         6,                                  );
+  MulitMediaRegister!     ( xmm7, asm::XWord,         7,                                  );
 
-  MulitMediaRegister!     ( ymm0, 32,         0,                                  );
-  MulitMediaRegister!     ( ymm1, 32,         1,                                  );
-  MulitMediaRegister!     ( ymm2, 32,         2,                                  );
-  MulitMediaRegister!     ( ymm3, 32,         3,                                  );
-  MulitMediaRegister!     ( ymm4, 32,         4,                                  );
-  MulitMediaRegister!     ( ymm5, 32,         5,                                  );
-  MulitMediaRegister!     ( ymm6, 32,         6,                                  );
-  MulitMediaRegister!     ( ymm7, 32,         7,                                  );
+  MulitMediaRegister!     ( ymm0, asm::YWord,         0,                                  );
+  MulitMediaRegister!     ( ymm1, asm::YWord,         1,                                  );
+  MulitMediaRegister!     ( ymm2, asm::YWord,         2,                                  );
+  MulitMediaRegister!     ( ymm3, asm::YWord,         3,                                  );
+  MulitMediaRegister!     ( ymm4, asm::YWord,         4,                                  );
+  MulitMediaRegister!     ( ymm5, asm::YWord,         5,                                  );
+  MulitMediaRegister!     ( ymm6, asm::YWord,         6,                                  );
+  MulitMediaRegister!     ( ymm7, asm::YWord,         7,                                  );
 
-  MulitMediaRegister!     ( zmm0, 64,         0,                                  );
-  MulitMediaRegister!     ( zmm1, 64,         1,                                  );
-  MulitMediaRegister!     ( zmm2, 64,         2,                                  );
-  MulitMediaRegister!     ( zmm3, 64,         3,                                  );
-  MulitMediaRegister!     ( zmm4, 64,         4,                                  );
-  MulitMediaRegister!     ( zmm5, 64,         5,                                  );
-  MulitMediaRegister!     ( zmm6, 64,         6,                                  );
-  MulitMediaRegister!     ( zmm7, 64,         7,                                  );
+  MulitMediaRegister!     ( zmm0, asm::ZWord,         0,                                  );
+  MulitMediaRegister!     ( zmm1, asm::ZWord,         1,                                  );
+  MulitMediaRegister!     ( zmm2, asm::ZWord,         2,                                  );
+  MulitMediaRegister!     ( zmm3, asm::ZWord,         3,                                  );
+  MulitMediaRegister!     ( zmm4, asm::ZWord,         4,                                  );
+  MulitMediaRegister!     ( zmm5, asm::ZWord,         5,                                  );
+  MulitMediaRegister!     ( zmm6, asm::ZWord,         6,                                  );
+  MulitMediaRegister!     ( zmm7, asm::ZWord,         7,                                  );
 }

@@ -20,6 +20,10 @@ use super::
   super::
   {
     Assembly,
+    asm::
+    {
+      asm,
+    },
     instructions::
     {
       Instruction,
@@ -137,55 +141,52 @@ impl          x86instruction
               );
               match size
               {
-                1
-                =>  {
-                      if  immediate >= -0x80
-                      &&  immediate <=  0xff
+                asm::Byte
+                =>  if  immediate >= -0x80
+                    &&  immediate <=  0xff
+                    {
+                      self.setOpcode                 ( opcode  | 4 );
+                      x86result::Done ( self  )
+                    }
+                    else
+                    {
+                      x86result::OutOfBounds
                       {
-                        self.setOpcode                 ( opcode  | 4 );
-                        x86result::Done ( self  )
-                      }
-                      else
-                      {
-                        x86result::OutOfBounds
-                        {
-                          number:       1,
-                          value:        immediate,
-                          minimum:      -0x80,
-                          maximum:      0xff,
-                        }
+                        number:         1,
+                        value:          immediate,
+                        minimum:        -0x80,
+                        maximum:        0xff,
                       }
                     },
-                2
-                =>  {
-                      if  immediate >= -0x8000
-                      &&  immediate <=  0xffff
+                asm::Word
+                =>  if  immediate >= -0x8000
+                    &&  immediate <=  0xffff
+                    {
+                      self.setOpcode                 ( opcode  | 5 );
+                      if  operandSize !=  asm::Word
                       {
-                        self.setOpcode                 ( opcode  | 5 );
-                        if  operandSize ==  4
-                        {
-                          self.setOperandSizeOverride  ( true        );
-                        }
-                        x86result::Done ( self  )
+                        self.setOperandSizeOverride  ( true        );
                       }
-                      else
+                      x86result::Done ( self  )
+                    }
+                    else
+                    {
+                      x86result::OutOfBounds
                       {
-                        x86result::OutOfBounds
-                        {
-                          number:       1,
-                          value:        immediate,
-                          minimum:      -0x8000,
-                          maximum:      0xffff,
-                        }
+                        number:         1,
+                        value:          immediate,
+                        minimum:        -0x8000,
+                        maximum:        0xffff,
                       }
                     },
-                4 if  version >= x86version::i386
-                =>  {
+                asm::DWord
+                =>  if  version >= x86version::i386
+                    {
                       if  immediate >= -0x80000000
                       &&  immediate <=  0xffffffff
                       {
                         self.setOpcode                 ( opcode  | 5 );
-                        if  operandSize ==  2
+                        if  operandSize ==  asm::Word
                         {
                           self.setOperandSizeOverride  ( true        );
                         }
@@ -201,6 +202,10 @@ impl          x86instruction
                           maximum:      0xffffffff,
                         }
                       }
+                    }
+                    else
+                    {
+                      x86result::MinimalVersion ( x86version::i386  )
                     },
                 _
                 =>  x86result::InvalidOperandSize,
@@ -210,8 +215,8 @@ impl          x86instruction
             {
               self.encodeModRegRMdata
               (
-                if  size  == 1
-                &&  version < x86version::amd64
+                if  size    ==  asm::Byte
+                &&  version <   x86version::amd64
                 &&  false
                 //&&  self.features.hazFeature ( AssemblyFeatures::RandomOpcode )
                 //&&  rand::random()
@@ -247,8 +252,8 @@ impl          x86instruction
         )
         =>  self.encodeModRegRMdata
             (
-              if  size  == 1
-              &&  version < x86version::amd64
+              if  size    ==  asm::Byte
+              &&  version <   x86version::amd64
               &&  false
               //&&  self.features.hazFeature ( AssemblyFeatures::RandomOpcode )
               //&&  rand::random()

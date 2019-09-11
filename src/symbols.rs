@@ -25,8 +25,8 @@ impl  Operand                           for Symbol
 pub struct  SymbolEntry
 {
   title:                                SymbolIdentifier,
-  first:                                Option<OperandType>,
-  value:                                Option<OperandType>,
+  first:                                Option  < OperandType >,
+  value:                                Option  < OperandType >,
   round:                                usize,
 }
 
@@ -34,8 +34,12 @@ pub type    SymbolIdentifier            =   String;
 
 pub struct  SymbolList
 {
-  hashMap:                              HashMap<SymbolIdentifier, SymbolReference>,
-  symbols:                              Vec<SymbolEntry>,
+  hashMap:                              HashMap
+                                        <
+                                          SymbolIdentifier,
+                                          SymbolReference,
+                                        >,
+  symbols:                              Vec < SymbolEntry >,
 }
 
 pub fn      SymbolList
@@ -55,9 +59,10 @@ impl        SymbolList
   (
     &mut self,
     title:                              SymbolIdentifier,
-    value:                              Option<OperandType>,
+    value:                              Option  < OperandType >,
     round:                              usize,
-  ) ->  SymbolReference
+  )
+  ->  SymbolReference
   {
     if let Some ( refer ) = self.hashMap.get  ( &title  )
     {
@@ -95,9 +100,14 @@ impl        SymbolList
   (
     &mut self,
     title:                              SymbolIdentifier,
-    value:                              Option<OperandType>,
+    value:                              Option  < OperandType >,
     round:                              usize,
-  ) ->  Result<SymbolReference, &'static str>
+  )
+  ->  Result
+      <
+        SymbolReference,
+        &'static str,
+      >
   {
     if let Some ( refer ) = self.hashMap.get  ( &title  )
     {
@@ -139,7 +149,8 @@ impl        SymbolList
   (
     &mut self,
     title:                              SymbolIdentifier,
-  ) ->  SymbolReference
+  )
+  ->  SymbolReference
   {
     if let Some ( refer ) = self.hashMap.get  ( &title  )
     {
@@ -166,13 +177,18 @@ impl        SymbolList
       refer
     }
   }
+
   pub fn modify
   (
     &mut self,
     refer:                              SymbolReference,
-    value:                              Option<OperandType>,
+    value:                              Option  < OperandType >,
     round:                              usize,
-  ) -> Option<&'static str>
+  )
+  ->  Option
+      <
+        &'static str,
+      >
   {
     if refer  < self.symbols.len  ( )
     {
@@ -189,11 +205,17 @@ impl        SymbolList
       Some  ( "Invalid Reference" )
     }
   }
+
   pub fn myName
   (
     &mut self,
     refer:                              SymbolReference,
-  ) ->  Result<String, &'static str>
+  )
+  ->  Result
+      <
+        String,
+        &'static str,
+      >
   {
     if refer  < self.symbols.len  ( )
     {
@@ -204,12 +226,21 @@ impl        SymbolList
       Err  ( "Invalid Reference" )
     }
   }
+
   pub fn obtain
   (
     &self,
     refer:                              SymbolReference,
     round:                              usize,
-  ) ->  Result<Option<OperandType>, &'static str>
+  )
+  ->  Result
+      <
+        Option
+        <
+          OperandType,
+        >,
+        &'static str,
+      >
   {
     if refer  < self.symbols.len  ( )
     {
