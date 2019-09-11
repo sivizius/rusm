@@ -31,4 +31,4 @@ I could use some help with
 1.  implementing new instruction sets,
 2.  correcting spelling, grammar, typography, ….
 
-Please Note: There are some [conventions](blob/master/conventions.md) to have at least some kind of rules to follow.
+Please Note: There are some [conventions](conventions.md) to have at least some kind of rules to follow.
