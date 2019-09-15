@@ -59,20 +59,25 @@ impl          Operand                   for char
 #[derive(Clone,Debug)]
 pub enum      OperandType
 {
+  // abstract
   Symbol                                ( SymbolIdentifier                  ),
   Reference                             ( SymbolReference                   ),
   Address                               ( AssemblyAddress                   ),
   Expression                            ( Expression                        ),
-  Tuple                                 ( Vec               < OperandType > ),
-  Instructions                          ( Vec               < Instruction > ),
-  // non-abstract
+  Global                                ( usize                             ),
+  Local                                 ( usize                             ),
+  // final
+  None,
   Constant                              ( i128                              ),
+  BinaryCodedDecimal                    ( i128                              ),
   Displacement                          ( i128                              ),
   Intersegment
   {
     offset:                             i128,
     segment:                            i128,
   },
+  Tuple                                 ( Vec               < OperandType > ),
+  Instructions                          ( Vec               < Instruction > ),
   #[cfg(any(feature="x86"))]
   x86                                   ( x86operand                        ),
   #[cfg(any(feature="x86"))]
@@ -92,8 +97,11 @@ impl OperandType
       OperandType::Reference  ( _ ) |
       OperandType::Address    ( _ ) |
       OperandType::Expression ( _ ) |
-      OperandType::Tuple      ( _ ) =>  true,
-      _                             =>  false,
+      OperandType::Global     ( _ ) |
+      OperandType::Local      ( _ )
+      =>  true,
+      _
+      =>  false,
     }
   }
 
@@ -115,20 +123,15 @@ impl OperandType
     match self
     {
       OperandType::Symbol                 ( name        )
-      =>  format! ( "${{{}}}", name ),
+      =>  format! ( "${{{}}}",    name,             ),
       OperandType::Reference              ( reference   )
-      =>  format! ( "$({})", reference),
+      =>  format! ( "$({})",      reference,        ),
       OperandType::Expression             ( expression  )
       =>  expression.format ( ),
-      OperandType::Tuple                  ( tuple       )
-      =>  {
-            let mut output              =   vec!  ( );
-            for item                    in  tuple
-            {
-              output.push ( item.format (   ) );
-            }
-            format! ( "({:?})", output  )
-          },
+      OperandType::Global                 ( number      )
+      =>  format! ( "global #{}", number,           ),
+      OperandType::Local                  ( number      )
+      =>  format! ( "local #{}",  number,           ),
       OperandType::Constant               ( constant    )
       =>  format!
           (
@@ -154,7 +157,16 @@ impl OperandType
             format! ( "@+{:04x}", constant )
           },
       OperandType::Intersegment           { offset, segment }
-      =>  format! ( "@{}:{}", segment, offset ),
+      =>  format! ( "@{}:{}",     segment,  offset, ),
+      OperandType::Tuple                  ( tuple       )
+      =>  {
+            let mut output              =   vec!  ( );
+            for item                    in  tuple
+            {
+              output.push ( item.format (   ) );
+            }
+            format! ( "({:?})", output  )
+          },
       #[cfg(any(feature="x86"))]
       OperandType::x86                    ( this            )
       =>  this.format ( ),

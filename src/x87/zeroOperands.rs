@@ -11,6 +11,10 @@ use super::
       Instruction,
       InstructionType,
     },
+    operands::
+    {
+      OperandType,
+    },
     x86::
     {
       x86instruction,
@@ -30,6 +34,7 @@ impl          Assembly
   assemblyZeroOperand!  ( x87fchs,    x87::fchs,    );
   assemblyZeroOperand!  ( x87fclex,   x87::fclex,   );
   assemblyZeroOperand!  ( x87fcompp,  x87::fcompp,  );
+  assemblyZeroOperand!  ( x87fcos,    x87::fcos,    );
   assemblyZeroOperand!  ( x87fdecstp, x87::fdecstp, );
   assemblyZeroOperand!  ( x87fdisi,   x87::fdisi,   );
   assemblyZeroOperand!  ( x87feni,    x87::feni,    );
@@ -47,13 +52,18 @@ impl          Assembly
   assemblyZeroOperand!  ( x87fneni,   x87::fneni,   );
   assemblyZeroOperand!  ( x87fninit,  x87::fninit,  );
   assemblyZeroOperand!  ( x87fnop,    x87::fnop,    );
+  assemblyZeroOperand!  ( x87fnsetpm, x87::fnsetpm, );
   assemblyZeroOperand!  ( x87fpatan,  x87::fpatan,  );
   assemblyZeroOperand!  ( x87fprem,   x87::fprem,   );
+  assemblyZeroOperand!  ( x87fprem1,  x87::fprem1,  );
   assemblyZeroOperand!  ( x87fptan,   x87::fptan,   );
   assemblyZeroOperand!  ( x87frndint, x87::frndint, );
   assemblyZeroOperand!  ( x87fscale,  x87::fscale,  );
+  assemblyZeroOperand!  ( x87fsin,    x87::fsin,    );
+  assemblyZeroOperand!  ( x87fsincos, x87::fsincos, );
   assemblyZeroOperand!  ( x87fsqrt,   x87::fsqrt,   );
   assemblyZeroOperand!  ( x87ftst,    x87::ftst,    );
+  assemblyZeroOperand!  ( x87fucompp, x87::fucompp, );
   assemblyZeroOperand!  ( x87fwait,   x87::fwait,   );  //  but encoded without escape
   assemblyZeroOperand!  ( x87fxam,    x87::fxam,    );
   assemblyZeroOperand!  ( x87fxtract, x87::fxtract, );
@@ -61,29 +71,36 @@ impl          Assembly
   assemblyZeroOperand!  ( x87fyl2xp1, x87::fyl2xp1, );
 }
 
-macro_rules!  x87zeroOperand {
+impl          x86instruction
+{
+  pub fn compileFloatZeroOperand
   (
-    $theName:ident,
-    $theInstruction:expr,
+    mut self,
+    opcode:                             u8,
+    fwait:                              bool,
+    modRegRM:                           u8,
+    operands:                           &Vec < OperandType >,
+    expected:                           x87expected,
+    fpu:                                x87version,
   )
-  =>  {
-        pub fn $theName
-        (
-        )
-        -> Instruction
-        {
-          Instruction
-          (
-            InstructionType::x87
-            {
-              architecture:             x86state  ( ),
-              instruction:              $theInstruction,
-            },
-            0,
-            vec!  ( ),
-          )
-        }
-      }
+  ->  x86result
+  {
+    if  operands.len  ( ) ==  0
+    {
+      self.setOpcode    ( 0xd8  | opcode  );
+      self.setFWait     ( fwait           );
+      self.setModRegRM  ( modRegRM        );
+      expected.result
+      (
+        fpu,
+        self,
+      )
+    }
+    else
+    {
+      x86result::InvalidNumberOfArguments ( 0 )
+    }
+  }
 }
 
 impl          x87
@@ -93,6 +110,7 @@ impl          x87
   x87zeroOperand!       ( fchs,       x87::FCHS,    );
   x87zeroOperand!       ( fclex,      x87::FCLEX,   );
   x87zeroOperand!       ( fcompp,     x87::FCOMPP,  );
+  x87zeroOperand!       ( fcos,       x87::FCOS,    );
   x87zeroOperand!       ( fdecstp,    x87::FDECSTP, );
   x87zeroOperand!       ( fdisi,      x87::FDISI,   );
   x87zeroOperand!       ( feni,       x87::FENI,    );
@@ -110,56 +128,21 @@ impl          x87
   x87zeroOperand!       ( fneni,      x87::FNENI,   );
   x87zeroOperand!       ( fninit,     x87::FNINIT,  );
   x87zeroOperand!       ( fnop,       x87::FNOP,    );
+  x87zeroOperand!       ( fnsetpm,    x87::FNSETPM, );
   x87zeroOperand!       ( fpatan,     x87::FPATAN,  );
   x87zeroOperand!       ( fprem,      x87::FPREM,   );
+  x87zeroOperand!       ( fprem1,     x87::FPREM1,  );
   x87zeroOperand!       ( fptan,      x87::FPTAN,   );
   x87zeroOperand!       ( frndint,    x87::FRNDINT, );
   x87zeroOperand!       ( fscale,     x87::FSCALE,  );
+  x87zeroOperand!       ( fsin,       x87::FSIN,    );
+  x87zeroOperand!       ( fsincos,    x87::FSINCOS, );
   x87zeroOperand!       ( fsqrt,      x87::FSQRT,   );
   x87zeroOperand!       ( ftst,       x87::FTST,    );
+  x87zeroOperand!       ( fucompp,    x87::FUCOMPP, );
   x87zeroOperand!       ( fwait,      x87::FWAIT,   );  //  but encoded without escape
   x87zeroOperand!       ( fxam,       x87::FXAM,    );
   x87zeroOperand!       ( fxtract,    x87::FXTRACT, );
   x87zeroOperand!       ( fyl2x,      x87::FYL2X,   );
   x87zeroOperand!       ( fyl2xp1,    x87::FYL2XP1, );
-}
-
-impl          x86instruction
-{
-  pub fn compileFloatZeroOperand
-  (
-    mut self,
-    opcode:                             u8,
-    fwait:                              bool,
-    modRegRM:                           u8,
-    version:                            x87version,
-    expected:                           x87expected,
-  )
-  ->  x86result
-  {
-    self.setOpcode    ( 0xd8  | opcode  );
-    self.setFWait     ( fwait           );
-    self.setModRegRM  ( modRegRM        );
-    match expected
-    {
-      x87expected::Default
-      =>  x86result::Done ( self  ),
-      x87expected::Only8087
-      =>  if  false //  TODO: Flag To Disable This Warning
-          {
-            x86result::Done ( self  )
-          }
-          else
-          {
-            x86result::Warn
-            (
-              self,
-              vec!  ( "This Instruction Is Equivalent To `fnop`, Unless x87-Version Is 8087.".to_string ( ) ),
-            )
-          },
-      x87expected::Over80387
-      =>  if  version >=  x87version::i387  { x86result::Done     ( self    ) }
-          else                              { x86result::Want387  ( version ) },
-    }
-  }
 }

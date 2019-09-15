@@ -122,13 +122,13 @@ impl          x86instruction
       )
       {
         (
-          OperandType::x86          ( x86operand::GeneralPurposeRegister  { size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
-          OperandType::Constant     ( immediate                                                                                                                           ),
+          OperandType::x86          ( x86operand::GeneralPurposeRegister  {           size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
+          OperandType::Constant     ( immediate                                                                                                                                     ),
         )
         |
         (
-          OperandType::x86          ( x86operand::GeneralPurposeRegister  { size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
-          OperandType::Displacement ( immediate                                                                                                                           ),
+          OperandType::x86          ( x86operand::GeneralPurposeRegister  {           size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
+          OperandType::Displacement ( immediate                                                                                                                                     ),
         )
         =>  if  ( *dstRegister  ==  GeneralPurposeRegisterNumber::AX                              )
 //            && !( self.features.hazFeature ( AssemblyFeatures::RandomOpcodeSize ) && rand::random() )
@@ -163,7 +163,7 @@ impl          x86instruction
                     &&  immediate <=  0xffff
                     {
                       self.setOpcode                 ( opcode  | 5 );
-                      if  operandSize !=  asm::Word
+                      if  operandSize ==  asm::DWord
                       {
                         self.setOperandSizeOverride  ( true        );
                       }
@@ -215,8 +215,8 @@ impl          x86instruction
             {
               self.encodeModRegRMdata
               (
-                if  size    ==  asm::Byte
-                &&  version <   x86version::amd64
+                if  size  ==  asm::Byte
+                &&  version < x86version::amd64
                 &&  false
                 //&&  self.features.hazFeature ( AssemblyFeatures::RandomOpcode )
                 //&&  rand::random()
@@ -242,18 +242,18 @@ impl          x86instruction
               )
             },
         (
-          OperandType::x86          ( x86operand::Memory16                { size: _,  segment:  dstSegment,   registers:  dstRegisters, displacement: dstDisplacement,  } ),
-          OperandType::Constant     ( immediate                                                                                                                           ),
+          OperandType::x86          ( x86operand::Memory16                { kind: _,  size: _,  segment:  dstSegment,   registers:  dstRegisters, displacement: dstDisplacement,  } ),
+          OperandType::Constant     ( immediate                                                                                                                                     ),
         )
         |
         (
-          OperandType::x86          ( x86operand::Memory16                { size: _,  segment:  dstSegment,   registers:  dstRegisters, displacement: dstDisplacement,  } ),
-          OperandType::Displacement ( immediate                                                                                                                           ),
+          OperandType::x86          ( x86operand::Memory16                { kind: _,  size: _,  segment:  dstSegment,   registers:  dstRegisters, displacement: dstDisplacement,  } ),
+          OperandType::Displacement ( immediate                                                                                                                                     ),
         )
         =>  self.encodeModRegRMdata
             (
-              if  size    ==  asm::Byte
-              &&  version <   x86version::amd64
+              if  size  ==  asm::Byte
+              &&  version < x86version::amd64
               &&  false
               //&&  self.features.hazFeature ( AssemblyFeatures::RandomOpcode )
               //&&  rand::random()
@@ -278,8 +278,8 @@ impl          x86instruction
               addressSize,
             ),
         (
-          OperandType::x86          ( x86operand::GeneralPurposeRegister  { size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
-          OperandType::x86          ( x86operand::GeneralPurposeRegister  { size: _,  rex:      _srcREX,      number:     srcRegister,                                  } ),
+          OperandType::x86          ( x86operand::GeneralPurposeRegister  {           size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
+          OperandType::x86          ( x86operand::GeneralPurposeRegister  {           size: _,  rex:      _srcREX,      number:     srcRegister,                                  } ),
         )
         =>  if  true
             //&&  self.features.hazFeature ( AssemblyFeatures::RandomOpcode )
@@ -308,7 +308,7 @@ impl          x86instruction
                 signExtension,
                 size,
                 SegmentRegisterNumber::None,
-                ( *srcRegister  as  u8  ) <<  3,
+                *srcRegister  as  u8,
                 *dstRegister  as  u8,
                 None,
                 None,
@@ -318,8 +318,8 @@ impl          x86instruction
               )
             },
         (
-          OperandType::x86          ( x86operand::GeneralPurposeRegister  { size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
-          OperandType::x86          ( x86operand::Memory16                { size: _,  segment:  srcSegment,   registers:  srcRegisters, displacement: srcDisplacement,  } ),
+          OperandType::x86          ( x86operand::GeneralPurposeRegister  {           size: _,  rex:      _dstREX,      number:     dstRegister,                                  } ),
+          OperandType::x86          ( x86operand::Memory16                { kind: _,  size: _,  segment:  srcSegment,   registers:  srcRegisters, displacement: srcDisplacement,  } ),
         )
         =>  self.encodeModRegRMdata
             (
@@ -336,8 +336,8 @@ impl          x86instruction
               addressSize,
             ),
         (
-          OperandType::x86          ( x86operand::Memory16                { size: _,  segment:  dstSegment,   registers:  dstRegisters, displacement: dstDisplacement,  } ),
-          OperandType::x86          ( x86operand::GeneralPurposeRegister  { size: _,  rex:      _srcREX,      number:     srcRegister,                                  } ),
+          OperandType::x86          ( x86operand::Memory16                { kind: _,  size: _,  segment:  dstSegment,   registers:  dstRegisters, displacement: dstDisplacement,  } ),
+          OperandType::x86          ( x86operand::GeneralPurposeRegister  {           size: _,  rex:      _srcREX,      number:     srcRegister,                                  } ),
         )
         =>  self.encodeModRegRMdata
             (

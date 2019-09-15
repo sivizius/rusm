@@ -10,6 +10,7 @@ use super::
   symbols::
   {
     SymbolList,
+    Variable,
   },
 };
 
@@ -247,7 +248,12 @@ impl        Instruction
     }
     else
     {
-      InstructionResult::Ready  ( None  )
+      InstructionResult::Ready
+      {
+        warnings:                       None,
+        width:                          self.width,
+        space:                          self.space,
+      }
     }
   }
 
@@ -442,11 +448,25 @@ impl        Instruction
 pub enum    InstructionResult
 {
   Again,                                                                  //  abstract and ready, but recompile every round.
-  Equal                                 ( u64,    u64,                ),  //  not ready, but known length
-  Error                                 ( Vec     < String  >         ),  //  failure.
-  Ready                                 ( Option  < Vec < String  > > ),  //  everything fine, do not have be touched ever again, but there might be warnings.
-  Rerun,                                                                  //  not ready, run again.
+  Bytes                                 ( Vec     < u8              > ),  //  append this bytes here and ready.
+  Equal                                 ( u64,    u64,                ),  //  not ready, but known length.
+  Error                                 ( Vec     < String          > ),  //  failure.
+  Global                                ( Variable                    ),  //  abstract and ready.
   Place                                 ( Vec     < Instruction     > ),  //  append these instruction here.
+  Ready
+  {
+    warnings:                           Option
+                                        <
+                                          Vec
+                                          <
+                                            String
+                                          >
+                                        >,
+    width:                              u64,
+    space:                              u64,
+  },                                                                      //  everything fine, do not have be touched ever again, but there might be warnings.
+  Replace                               ( InstructionType             ),  //  replace instruction.
+  Rerun,                                                                  //  not ready, run again.
 }
 
 impl        InstructionResult

@@ -4,6 +4,7 @@
 #![allow(non_upper_case_globals)]
 
 #![feature(try_trait)]
+#![feature(type_alias_enum_variants)]
 
 
 macro_rules!  assemblyZeroOperand
@@ -123,8 +124,8 @@ macro_rules!  assemblyStringOperand
       }
 }
 
-//#[macro_use]
-//extern  crate bitflags;
+#[macro_use]
+extern  crate bitflags;
 #[macro_use]
 extern  crate const_type;
 
@@ -153,6 +154,7 @@ use crate::
   symbols::
   {
     SymbolList,
+    Variable,
   },
 };
 
@@ -210,6 +212,7 @@ pub struct    Assembly
   state:                                AssemblyState,
   instructions:                         Vec < Instruction     >,
   architecture:                         Architecture,
+  globals:                              Vec < Variable        >,
   //  Values for Debugging, Will Be Changed by Backend
   messages:                             Vec < AssemblyMessage >,
   lines:                                usize,
@@ -237,6 +240,7 @@ pub fn        Assembly
     state:                              AssemblyState::Uncompiled ( 0 ),
     instructions:                       vec!  ( ),
     architecture:                       Architecture::None,
+    globals:                            vec!  ( ),
     messages:                           vec!  ( ),
     lines:                              0,
   }
@@ -316,7 +320,7 @@ impl        Assembly
           buffer.clear  ( );
           let mut address               =   AssemblyAddress ( );
           //print!  ( "\n=#=#= round: {} =#=#=",  ctrRounds );
-          Self::list ( &instructionList  );
+          //Self::list ( &instructionList  );
           done
           = match self.compileList
                   (
@@ -331,7 +335,7 @@ impl        Assembly
               None            =>  break 'outer,
               Some  ( done  ) =>  done,
             };
-          Self::list ( &instructionList  );
+          //Self::list ( &instructionList  );
           if  done
           {
             break                       'outer;
@@ -413,12 +417,29 @@ impl        Assembly
       {
         InstructionResult::Again
         =>  { },
-        InstructionResult::Equal  ( width,  space     )
+        InstructionResult::Bytes    ( mut buffer        )
+        =>  {
+              instruction.append  ( &mut  buffer.clone  ( ) );
+              if  let Some  ( pointer ) = address.ptrFile ( )
+              {
+                let     length          =   buffer.len        ( );
+                if  length  > 0
+                {
+                  output.resize
+                  (
+                    pointer as  usize,
+                    0x00,
+                  );
+                  output.append ( &mut  buffer  );
+                }
+              }
+            },
+        InstructionResult::Equal    ( width,  space     )
         =>  {
               address.append      ( width,                  space,                  );
               done                      =   false;
             }
-        InstructionResult::Error  ( messages          )
+        InstructionResult::Error    ( messages          )
         =>  {
               *errors                   +=  1;
               for error                 in  messages
@@ -437,7 +458,9 @@ impl        Assembly
                 }
               }
             },
-        InstructionResult::Place  ( mut instructions  )
+        InstructionResult::Global   ( variable          )
+        =>  self.globals.push ( variable  ),
+        InstructionResult::Place    ( mut instructions  )
         =>  {
               match self.compileList
                     (
@@ -458,8 +481,18 @@ impl        Assembly
                     },
               }
             },
-        InstructionResult::Ready  ( warnings          )
+        InstructionResult::Ready
+        {
+          warnings,
+          width,
+          space,
+        }
         =>  {
+              instruction.setWidthAndSpace
+              (
+                width,
+                space,
+              );
               if  let Some  ( warnings  ) = warnings
               {
                 for message             in  warnings
@@ -495,6 +528,8 @@ impl        Assembly
               address.append      ( instruction.width ( ),  instruction.space ( ),  );
               instruction.ready   (                                                 );
             },
+        InstructionResult::Replace  ( this              )
+        =>  instruction.thisSet ( this  ),
         InstructionResult::Rerun
         =>  {
               address.invalidate  (                                         );

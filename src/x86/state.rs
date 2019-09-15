@@ -19,6 +19,19 @@ use super::
   },
 };
 
+//  TODO: fld/fild/fbld defaults
+//    lazy:
+//      fld:  0b111
+//      fild: 0b111
+//      fbld: 0b111
+//    normal:
+//      fld:  0b111
+//      fild: 0b010
+//      fbld: 0b100
+//    strict:
+//      fld:  0b001
+//      fild: 0b010
+//      fbld: 0b100
 impl          Assembly
 {
   pub fn x86config
@@ -86,7 +99,12 @@ impl          Instruction
               theRepeat:                x86prefixByte::Default,
             },
           );
-        InstructionResult::Ready  ( None  )
+        InstructionResult::Ready
+        {
+          warnings:                     None,
+          width:                        0,
+          space:                        0,
+        }
       }
       else  if  let Architecture::x86 ( ref mut state ) = architecture
       {
@@ -102,7 +120,12 @@ impl          Instruction
           x86prefix::UsuallyTaken     =>  state.theBranchHint =   x86prefixByte::BranchTaken,
           _                           =>  unreachable!  ( ),
         }
-        InstructionResult::Ready  ( None  )
+        InstructionResult::Ready
+        {
+          warnings:                     None,
+          width:                        0,
+          space:                        0,
+        }
       }
       else
       {

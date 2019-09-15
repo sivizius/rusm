@@ -18,6 +18,11 @@ use rusm::
   {
     Symbol,
   },
+  asm::
+  {
+    asm,
+    asmKind,
+  },
   x86::
   {
     x86,

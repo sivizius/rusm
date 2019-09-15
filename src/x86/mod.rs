@@ -89,37 +89,37 @@ impl          Instruction
           let     result
           = match this
             {
-              x86::AAA      =>  instruction.compileZeroOperand  ( 0x37,                                                           ),
+              x86::AAA      =>  instruction.compileZeroOperand  ( 0x37,               operands,                                   ),
               x86::AAD      =>  x86result::NotImplemented       ( "aad"                                                           ),
-              x86::AAS      =>  instruction.compileZeroOperand  ( 0x3f,                                                           ),
+              x86::AAS      =>  instruction.compileZeroOperand  ( 0x3f,               operands,                                   ),
               x86::AAM      =>  x86result::NotImplemented       ( "aam",                                                          ),
               x86::ADC      =>  instruction.compileSimpleMath   ( 0x10, true,   size, operands, cpu,  operandSize,  addressSize,  ),
               x86::ADD      =>  instruction.compileSimpleMath   ( 0x00, true,   size, operands, cpu,  operandSize,  addressSize,  ),
               x86::AND      =>  instruction.compileSimpleMath   ( 0x20, false,  size, operands, cpu,  operandSize,  addressSize,  ),
               x86::CALL     =>  x86result::NotImplemented       ( "call",                                                         ),
-              x86::CBW      =>  instruction.compileZeroOperand  ( 0x98,                                                           ),
-              x86::CLC      =>  instruction.compileZeroOperand  ( 0xf8,                                                           ),
-              x86::CLD      =>  instruction.compileZeroOperand  ( 0xfc,                                                           ),
-              x86::CLI      =>  instruction.compileZeroOperand  ( 0xfa,                                                           ),
-              x86::CMC      =>  instruction.compileZeroOperand  ( 0xf5,                                                           ),
+              x86::CBW      =>  instruction.compileZeroOperand  ( 0x98,               operands,                                   ),
+              x86::CLC      =>  instruction.compileZeroOperand  ( 0xf8,               operands,                                   ),
+              x86::CLD      =>  instruction.compileZeroOperand  ( 0xfc,               operands,                                   ),
+              x86::CLI      =>  instruction.compileZeroOperand  ( 0xfa,               operands,                                   ),
+              x86::CMC      =>  instruction.compileZeroOperand  ( 0xf5,               operands,                                   ),
               x86::CMP      =>  instruction.compileSimpleMath   ( 0x38, false,  size, operands, cpu,  operandSize,  addressSize,  ),
-              x86::CMPSB    =>  instruction.compileZeroOperand  ( 0xa6,                                                           ),
-              x86::CMPSW    =>  instruction.compileZeroOperand  ( 0xa7,                                                           ),
-              x86::CWD      =>  instruction.compileZeroOperand  ( 0x99,                                                           ),
-              x86::DAA      =>  instruction.compileZeroOperand  ( 0x27,                                                           ),
-              x86::DAS      =>  instruction.compileZeroOperand  ( 0x2f,                                                           ),
+              x86::CMPSB    =>  instruction.compileZeroOperand  ( 0xa6,               operands,                                   ),
+              x86::CMPSW    =>  instruction.compileZeroOperand  ( 0xa7,               operands,                                   ),
+              x86::CWD      =>  instruction.compileZeroOperand  ( 0x99,               operands,                                   ),
+              x86::DAA      =>  instruction.compileZeroOperand  ( 0x27,               operands,                                   ),
+              x86::DAS      =>  instruction.compileZeroOperand  ( 0x2f,               operands,                                   ),
               x86::DEC      =>  x86result::NotImplemented       ( "dec",                                                          ),
               x86::DIV      =>  x86result::NotImplemented       ( "div",                                                          ),
               x86::ESC      =>  x86result::NotImplemented       ( "esc",                                                          ),
-              x86::HLT      =>  instruction.compileZeroOperand  ( 0xf4,                                                           ),
+              x86::HLT      =>  instruction.compileZeroOperand  ( 0xf4,               operands,                                   ),
               x86::IDIV     =>  x86result::NotImplemented       ( "idiv",                                                         ),
               x86::IMUL     =>  x86result::NotImplemented       ( "imul",                                                         ),
               x86::IN       =>  instruction.compileIO           ( 0xe4, false,        operands, cpu,  operandSize,  addressSize,  ),
               x86::INC      =>  x86result::NotImplemented       ( "inc",                                                          ),
               x86::INT      =>  x86result::NotImplemented       ( "int",                                                          ),
-              x86::INT3     =>  instruction.compileZeroOperand  ( 0xcc,                                                           ),
-              x86::INTO     =>  instruction.compileZeroOperand  ( 0xce,                                                           ),
-              x86::IRET     =>  instruction.compileZeroOperand  ( 0xcf,                                                           ),
+              x86::INT3     =>  instruction.compileZeroOperand  ( 0xcc,               operands,                                   ),
+              x86::INTO     =>  instruction.compileZeroOperand  ( 0xce,               operands,                                   ),
+              x86::IRET     =>  instruction.compileZeroOperand  ( 0xcf,               operands,                                   ),
               x86::JB       =>  instruction.compileJump         ( 0x72,               operands,                                   ),
               x86::JBE      =>  instruction.compileJump         ( 0x76,               operands,                                   ),
               x86::JCXZ     =>  instruction.compileJump         ( 0xe3,               operands,                                   ),
@@ -138,52 +138,52 @@ impl          Instruction
               x86::JO       =>  instruction.compileJump         ( 0x70,               operands,                                   ),
               x86::JP       =>  instruction.compileJump         ( 0x7a,               operands,                                   ),
               x86::JS       =>  instruction.compileJump         ( 0x78,               operands,                                   ),
-              x86::LAHF     =>  instruction.compileZeroOperand  ( 0x9f,                                                           ),
+              x86::LAHF     =>  instruction.compileZeroOperand  ( 0x9f,               operands,                                   ),
               x86::LDS      =>  x86result::NotImplemented       ( "lds",                                                          ),
               x86::LEA      =>  x86result::NotImplemented       ( "lea",                                                          ),
               x86::LES      =>  x86result::NotImplemented       ( "les",                                                          ),
-              x86::LODSB    =>  instruction.compileZeroOperand  ( 0xac,                                                           ),
-              x86::LODSW    =>  instruction.compileZeroOperand  ( 0xad,                                                           ),
+              x86::LODSB    =>  instruction.compileZeroOperand  ( 0xac,               operands,                                   ),
+              x86::LODSW    =>  instruction.compileZeroOperand  ( 0xad,               operands,                                   ),
               x86::LOOP     =>  instruction.compileJump         ( 0xe2,               operands,                                   ),
               x86::LOOPZ    =>  instruction.compileJump         ( 0xe1,               operands,                                   ),
               x86::LOOPNZ   =>  instruction.compileJump         ( 0xe0,               operands,                                   ),
               x86::MOV      =>  x86result::NotImplemented       ( "mov",                                                          ),
-              x86::MOVSB    =>  instruction.compileZeroOperand  ( 0xa4,                                                           ),
-              x86::MOVSW    =>  instruction.compileZeroOperand  ( 0xa5,                                                           ),
+              x86::MOVSB    =>  instruction.compileZeroOperand  ( 0xa4,               operands,                                   ),
+              x86::MOVSW    =>  instruction.compileZeroOperand  ( 0xa5,               operands,                                   ),
               x86::MUL      =>  x86result::NotImplemented       ( "mul",                                                          ),
               x86::NEG      =>  x86result::NotImplemented       ( "neg",                                                          ),
               x86::NOT      =>  x86result::NotImplemented       ( "not",                                                          ),
               x86::OR       =>  instruction.compileSimpleMath   ( 0x08, false,  size, operands, cpu,  operandSize,  addressSize,  ),
               x86::OUT      =>  instruction.compileIO           ( 0xe6, true,         operands, cpu,  operandSize,  addressSize,  ),
               x86::POP      =>  x86result::NotImplemented       ( "pop",                                                          ),
-              x86::POPF     =>  instruction.compileZeroOperand  ( 0x9d,                                                           ),
+              x86::POPF     =>  instruction.compileZeroOperand  ( 0x9d,               operands,                                   ),
               x86::PUSH     =>  x86result::NotImplemented       ( "push",                                                         ),
-              x86::PUSHF    =>  instruction.compileZeroOperand  ( 0x9c,                                                           ),
+              x86::PUSHF    =>  instruction.compileZeroOperand  ( 0x9c,               operands,                                   ),
               x86::RCL      =>  x86result::NotImplemented       ( "rcl",                                                          ),
               x86::RCR      =>  x86result::NotImplemented       ( "rcr",                                                          ),
               x86::RETF     =>  x86result::NotImplemented       ( "retf",                                                         ),
               x86::RETN     =>  x86result::NotImplemented       ( "retn",                                                         ),
               x86::ROL      =>  x86result::NotImplemented       ( "rol",                                                          ),
               x86::ROR      =>  x86result::NotImplemented       ( "ror",                                                          ),
-              x86::SAHF     =>  instruction.compileZeroOperand  ( 0x9e,                                                           ),
+              x86::SAHF     =>  instruction.compileZeroOperand  ( 0x9e,               operands,                                   ),
               x86::SAL      =>  x86result::NotImplemented       ( "sal",                                                          ),
-              x86::SALC     =>  instruction.compileZeroOperand  ( 0xd6,                                                           ),
+              x86::SALC     =>  instruction.compileZeroOperand  ( 0xd6,               operands,                                   ),
               x86::SAR      =>  x86result::NotImplemented       ( "sar",                                                          ),
               x86::SHL      =>  x86result::NotImplemented       ( "shl",                                                          ),
               x86::SHR      =>  x86result::NotImplemented       ( "shr",                                                          ),
               x86::SBB      =>  instruction.compileSimpleMath   ( 0x18, true,   size, operands, cpu,  operandSize,  addressSize,  ),
-              x86::SCASB    =>  instruction.compileZeroOperand  ( 0xae,                                                           ),
-              x86::SCASW    =>  instruction.compileZeroOperand  ( 0xaf,                                                           ),
-              x86::STC      =>  instruction.compileZeroOperand  ( 0xf9,                                                           ),
-              x86::STD      =>  instruction.compileZeroOperand  ( 0xfd,                                                           ),
-              x86::STI      =>  instruction.compileZeroOperand  ( 0xfb,                                                           ),
-              x86::STOSB    =>  instruction.compileZeroOperand  ( 0xaa,                                                           ),
-              x86::STOSW    =>  instruction.compileZeroOperand  ( 0xab,                                                           ),
+              x86::SCASB    =>  instruction.compileZeroOperand  ( 0xae,               operands,                                   ),
+              x86::SCASW    =>  instruction.compileZeroOperand  ( 0xaf,               operands,                                   ),
+              x86::STC      =>  instruction.compileZeroOperand  ( 0xf9,               operands,                                   ),
+              x86::STD      =>  instruction.compileZeroOperand  ( 0xfd,               operands,                                   ),
+              x86::STI      =>  instruction.compileZeroOperand  ( 0xfb,               operands,                                   ),
+              x86::STOSB    =>  instruction.compileZeroOperand  ( 0xaa,               operands,                                   ),
+              x86::STOSW    =>  instruction.compileZeroOperand  ( 0xab,               operands,                                   ),
               x86::SUB      =>  instruction.compileSimpleMath   ( 0x28, true,   size, operands, cpu,  operandSize,  addressSize,  ),
               x86::TEST     =>  x86result::NotImplemented       ( "test",                                                         ),
-              x86::WAIT     =>  instruction.compileZeroOperand  ( 0x9b,                                                           ),
+              x86::WAIT     =>  instruction.compileZeroOperand  ( 0x9b,               operands,                                   ),
               x86::XCHG     =>  x86result::NotImplemented       ( "xchg",                                                         ),
-              x86::XLAT     =>  instruction.compileZeroOperand  ( 0xd7,                                                           ),
+              x86::XLAT     =>  instruction.compileZeroOperand  ( 0xd7,               operands,                                   ),
               x86::XOR      =>  instruction.compileSimpleMath   ( 0x30, false,  size, operands, cpu,  operandSize,  addressSize,  ),
               //_             =>  x86result::NotImplemented       ( "???",                                                          ),
             };
@@ -391,21 +391,25 @@ impl          Instruction
 
             //  And Return
             let     length          =   self.length ( );
-            self.setWidthAndSpace
-            (
-              length,
-              length,
-            );
-            InstructionResult::Ready  ( warnings  )
+            InstructionResult::Ready
+            {
+              warnings,
+              width:                    length,
+              space:                    length,
+            }
           },
       x86result::Rerun
       =>  InstructionResult::Rerun,
-      x86result::Want387                  ( version )
+      x86result::WrongVersion
+      {
+        have,
+        want,
+      }
       =>  InstructionResult::Again.minimalVersion
           (
             "x87",
-            version.name  ( ),
-            "80387",
+            have.name  ( ),
+            want.name  ( ),
           ),
     }
   }
@@ -612,6 +616,11 @@ impl          x86instruction
     }
     match size
     {
+      asm::Null
+      =>  {
+            self.theOpcode              =   opcode;
+            x86result::Done ( self  )
+          },
       asm::Byte
       =>  {
             self.theOpcode              =   opcode  | 0;
@@ -771,7 +780,11 @@ pub enum      x86result
     warnings:                           Option  < Vec < String  > >,
   },
   Rerun,
-  Want387                               ( x87version      ),
+  WrongVersion
+  {
+    have:                               x87version,
+    want:                               x87version,
+  },
 }
 
 impl          x86result

@@ -43,7 +43,7 @@ impl        Expression
     {
       match token
       {
-        ExpressionToken::Constant       ( _     )
+        ExpressionToken::Constant   ( _     )
         =>  Ok              ( vec!  ( token ) ),
         #[cfg(any(feature="x86"))]
         ExpressionToken::x86            ( value )
@@ -314,12 +314,12 @@ impl        Expression
     match stack.as_slice()
     {
       [ ExpressionToken::Constant ( value ) ]
-      =>  Ok  ( ( Some  ( 0 ),      OperandType::Constant               ( *value                                                                  ) ) ),
+      =>  Ok  ( ( Some  ( 0 ),  OperandType::Constant   ( *value                ) ) ),
       #[cfg(any(feature="x86"))]
       [ ExpressionToken::x86      ( value ) ]
       =>  value.solve ( ),
       _
-      =>  Ok  ( ( None,             OperandType::Expression             ( Expression  ( stack )                                                   ) ) ),
+      =>  Ok  ( ( None,         OperandType::Expression ( Expression  ( stack ) ) ) ),
     }
   }
 

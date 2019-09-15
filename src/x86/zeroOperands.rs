@@ -15,6 +15,10 @@ use super::
       Instruction,
       InstructionType,
     },
+    operands::
+    {
+      OperandType,
+    },
   },
 };
 
@@ -125,10 +129,18 @@ impl          x86instruction
   (
     mut self,
     opcode:                             u8,
+    operands:                           &Vec < OperandType >,
   )
   ->  x86result
   {
-    self.setOpcode    ( opcode  );
-    x86result::Done   ( self    )
+    if  operands.len  ( ) ==  0
+    {
+      self.setOpcode    ( opcode  );
+      x86result::Done   ( self    )
+    }
+    else
+    {
+      x86result::InvalidNumberOfArguments ( 0 )
+    }
   }
 }

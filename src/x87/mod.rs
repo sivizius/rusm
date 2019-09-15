@@ -1,4 +1,99 @@
+macro_rules!  x87zeroOperand {
+  (
+    $theName:ident,
+    $theInstruction:expr,
+  )
+  =>  {
+        pub fn $theName
+        (
+        )
+        -> Instruction
+        {
+          Instruction
+          (
+            InstructionType::x87
+            {
+              architecture:             x86state  ( ),
+              instruction:              $theInstruction,
+            },
+            0,
+            vec!  ( ),
+          )
+        }
+      }
+}
+
+macro_rules!  x87oneOperand {
+  (
+    $theName:ident,
+    $theInstruction:expr,
+  )
+  =>  {
+        pub fn $theName
+        (
+          op:                           impl  Operand,
+        )
+        -> Instruction
+        {
+          let     ( this, size, )       =   op.this ( );
+          Instruction
+          (
+            InstructionType::x87
+            {
+              architecture:             x86state  ( ),
+              instruction:              $theInstruction,
+            },
+            size,
+            vec!
+            (
+              this,
+            ),
+          )
+        }
+      }
+}
+
+macro_rules!  x87twoOperand {
+  (
+    $theName:ident,
+    $theInstruction:expr,
+  )
+  =>  {
+        pub fn $theName
+        (
+          dst:                          impl  Operand,
+          src:                          impl  Operand,
+        )
+        -> Instruction
+        {
+          let     ( dstThis, dstSize, ) =   dst.this  ( );
+          let     ( srcThis, srcSize, ) =   src.this  ( );
+          let size                      =   ( dstSize | srcSize ) as  usize;
+          Instruction
+          (
+            InstructionType::x87
+            {
+              architecture:             x86state  ( ),
+              instruction:              $theInstruction,
+            },
+            size,
+            vec!
+            (
+              dstThis,
+              srcThis,
+            ),
+          )
+        }
+      }
+}
+
 pub mod operands;
+mod     cmov;
+mod     load;
+mod     math;
+mod     misc;
+mod     registerOperand;
+mod     simple;
 mod     zeroOperands;
 
 use super::
@@ -12,7 +107,12 @@ use super::
   },
   x86::
   {
+    x86instruction,
     x86result,
+  },
+  x87::
+  {
+    simple::x87simple,
   },
 };
 
@@ -34,7 +134,7 @@ impl          Instruction
         _size,
         instruction,
       )                                 =   self.x86init  ( );
-      let     _operands                 =   &operands;
+      let     operands                  =   &operands;
       if  let InstructionType::x87
               {
                 architecture:           ref mut state,
@@ -45,8 +145,8 @@ impl          Instruction
         (
           cpu,
           fpu,
-          _operandSize,
-          _addressSize,
+          operandSize,
+          addressSize,
           hazLock,
           theBranchHint,
           theRepeat,
@@ -60,115 +160,106 @@ impl          Instruction
         {
           let     result
           = match this
-            {
-              x87::F2XM1    =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf0, fpu,  x87expected::Default,   ),
-              x87::FABS     =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xe1, fpu,  x87expected::Default,   ),
-              x87::FADD     =>  x86result::NotImplemented           ( "fadd",                                           ),
-              x87::FADDP    =>  x86result::NotImplemented           ( "faddp",                                          ),
-              x87::FBLD     =>  x86result::NotImplemented           ( "fbld",                                           ),
-              x87::FBSTP    =>  x86result::NotImplemented           ( "fbstp",                                          ),
-              x87::FCHS     =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xe0, fpu,  x87expected::Default,   ),
-              x87::FCLEX    =>  instruction.compileFloatZeroOperand ( 0x03, true,   0xe2, fpu,  x87expected::Default,   ),
-              x87::FCMOVB   =>  x86result::NotImplemented           ( "fcmovb",                                         ),
-              x87::FCMOVBE  =>  x86result::NotImplemented           ( "fcmovbe",                                        ),
-              x87::FCMOVE   =>  x86result::NotImplemented           ( "fcmove",                                         ),
-              x87::FCMOVNB  =>  x86result::NotImplemented           ( "fcmovnb",                                        ),
-              x87::FCMOVNBE =>  x86result::NotImplemented           ( "fcmovnbe",                                       ),
-              x87::FCMOVNE  =>  x86result::NotImplemented           ( "fcmovne",                                        ),
-              x87::FCMOVNU  =>  x86result::NotImplemented           ( "fcmovnu",                                        ),
-              x87::FCMOVU   =>  x86result::NotImplemented           ( "fcmovu",                                         ),
-              x87::FCOM     =>  x86result::NotImplemented           ( "fcom",                                           ),
-              x87::FCOMI    =>  x86result::NotImplemented           ( "fcomi",                                          ),
-              x87::FCOMIP   =>  x86result::NotImplemented           ( "fcomip",                                         ),
-              x87::FCOMP    =>  x86result::NotImplemented           ( "fcomp",                                          ),
-              x87::FCOMP3   =>  x86result::NotImplemented           ( "fcomp3",                                         ),
-              x87::FCOMP5   =>  x86result::NotImplemented           ( "fcomp5",                                         ),
-              x87::FCOMPP   =>  instruction.compileFloatZeroOperand ( 0x06, false,  0xd9, fpu,  x87expected::Default,   ),
-              x87::FCOS     =>  x86result::NotImplemented           ( "fcos",                                           ),
-              x87::FDECSTP  =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf6, fpu,  x87expected::Default,   ),
-              x87::FDISI    =>  instruction.compileFloatZeroOperand ( 0x03, true,   0xe1, fpu,  x87expected::Only8087,  ),
-              x87::FDIV     =>  x86result::NotImplemented           ( "fdiv",                                           ),
-              x87::FDIVP    =>  x86result::NotImplemented           ( "fdivp",                                          ),
-              x87::FDIVR    =>  x86result::NotImplemented           ( "fdivr",                                          ),
-              x87::FDIVRP   =>  x86result::NotImplemented           ( "fdivrp",                                         ),
-              x87::FENI     =>  instruction.compileFloatZeroOperand ( 0x03, true,    0xe0, fpu,  x87expected::Only8087, ),
-              x87::FFREE    =>  x86result::NotImplemented           ( "ffree",                                          ),
-              x87::FFREEP   =>  x86result::NotImplemented           ( "ffreep",                                         ),
-              x87::FIADD    =>  x86result::NotImplemented           ( "fiadd",                                          ),
-              x87::FICOM    =>  x86result::NotImplemented           ( "ficom",                                          ),
-              x87::FICOMP   =>  x86result::NotImplemented           ( "ficomp",                                         ),
-              x87::FIDIV    =>  x86result::NotImplemented           ( "fidiv",                                          ),
-              x87::FIDIVR   =>  x86result::NotImplemented           ( "fidivr",                                         ),
-              x87::FILD     =>  x86result::NotImplemented           ( "fild",                                           ),
-              x87::FIMUL    =>  x86result::NotImplemented           ( "fimul",                                          ),
-              x87::FINCSTP  =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf7, fpu,  x87expected::Default,   ),
-              x87::FINIT    =>  instruction.compileFloatZeroOperand ( 0x03, true,   0xe3, fpu,  x87expected::Default,   ),
-              x87::FIST     =>  x86result::NotImplemented           ( "fist",                                           ),
-              x87::FISTP    =>  x86result::NotImplemented           ( "fistp",                                          ),
-              x87::FISTTP   =>  x86result::NotImplemented           ( "fisttp",                                         ),
-              x87::FISUB    =>  x86result::NotImplemented           ( "fisub",                                          ),
-              x87::FISUBR   =>  x86result::NotImplemented           ( "fisubr",                                         ),
-              x87::FLD      =>  x86result::NotImplemented           ( "fld",                                            ),
-              x87::FLD1     =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xe8, fpu,  x87expected::Default,   ),
-              x87::FLDCW    =>  x86result::NotImplemented           ( "fldcw",                                          ),
-              x87::FLDENV   =>  x86result::NotImplemented           ( "fldenv",                                         ),
-              x87::FLDL2E   =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xea, fpu,  x87expected::Default,   ),
-              x87::FLDL2T   =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xe9, fpu,  x87expected::Default,   ),
-              x87::FLDLG2   =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xec, fpu,  x87expected::Default,   ),
-              x87::FLDLN2   =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xed, fpu,  x87expected::Default,   ),
-              x87::FLDPI    =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xeb, fpu,  x87expected::Default,   ),
-              x87::FLDZ     =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xee, fpu,  x87expected::Default,   ),
-              x87::FMUL     =>  x86result::NotImplemented           ( "fmul",                                           ),
-              x87::FMULP    =>  x86result::NotImplemented           ( "fmulp",                                          ),
-              x87::FNCLEX   =>  instruction.compileFloatZeroOperand ( 0x03, false,  0xe2, fpu,  x87expected::Default,   ),
-              x87::FNDISI   =>  instruction.compileFloatZeroOperand ( 0x03, false,  0xe1, fpu,  x87expected::Only8087,  ),
-              x87::FNENI    =>  instruction.compileFloatZeroOperand ( 0x03, false,  0xe0, fpu,  x87expected::Only8087,  ),
-              x87::FNINIT   =>  instruction.compileFloatZeroOperand ( 0x03, false,  0xe3, fpu,  x87expected::Default,   ),
-              x87::FNOP     =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xd0, fpu,  x87expected::Default,   ),
-              x87::FNSAVE   =>  x86result::NotImplemented           ( "fnsave",                                         ),
-              x87::FNSETPM  =>  x86result::NotImplemented           ( "fnsetpm",                                        ),
-              x87::FNSTCW   =>  x86result::NotImplemented           ( "fnstcw",                                         ),
-              x87::FNSTENV  =>  x86result::NotImplemented           ( "fnstenv",                                        ),
-              x87::FNSTSW   =>  x86result::NotImplemented           ( "fnstsw",                                         ),
-              x87::FPATAN   =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf3, fpu,  x87expected::Default,   ),
-              x87::FPREM    =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf8, fpu,  x87expected::Default,   ),
-              x87::FPREM1   =>  x86result::NotImplemented           ( "fprem1",                                         ),
-              x87::FPTAN    =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf2, fpu,  x87expected::Default,   ),
-              x87::FRNDINT  =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xfc, fpu,  x87expected::Default,   ),
-              x87::FRSTOR   =>  x86result::NotImplemented           ( "frstor",                                         ),
-              x87::FSAVE    =>  x86result::NotImplemented           ( "fsave",                                          ),
-              x87::FSCALE   =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xfd, fpu,  x87expected::Default,   ),
-              x87::FSIN     =>  x86result::NotImplemented           ( "fsin",                                           ),
-              x87::FSINCOS  =>  x86result::NotImplemented           ( "fsincos",                                        ),
-              x87::FSQRT    =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xfa, fpu,  x87expected::Default,   ),
-              x87::FST      =>  x86result::NotImplemented           ( "fst",                                            ),
-              x87::FSTCW    =>  x86result::NotImplemented           ( "fstcw",                                          ),
-              x87::FSTENV   =>  x86result::NotImplemented           ( "fstenv",                                         ),
-              x87::FSTP     =>  x86result::NotImplemented           ( "fstp",                                           ),
-              x87::FSTP1    =>  x86result::NotImplemented           ( "fstp1",                                          ),
-              x87::FSTP8    =>  x86result::NotImplemented           ( "fstp8",                                          ),
-              x87::FSTP9    =>  x86result::NotImplemented           ( "fstp9",                                          ),
-              x87::FSTSW    =>  x86result::NotImplemented           ( "fstsw",                                          ),
-              x87::FSUB     =>  x86result::NotImplemented           ( "fsub",                                           ),
-              x87::FSUBP    =>  x86result::NotImplemented           ( "fsubp",                                          ),
-              x87::FSUBR    =>  x86result::NotImplemented           ( "fsubr",                                          ),
-              x87::FSUBRP   =>  x86result::NotImplemented           ( "fsubrp",                                         ),
-              x87::FTST     =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xe4, fpu,  x87expected::Default,   ),
-              x87::FUCOM    =>  x86result::NotImplemented           ( "fucom",                                          ),
-              x87::FUCOMI   =>  x86result::NotImplemented           ( "fucomi",                                         ),
-              x87::FUCOMIP  =>  x86result::NotImplemented           ( "fucomip",                                        ),
-              x87::FUCOMP   =>  x86result::NotImplemented           ( "fucomp",                                         ),
-              x87::FUCOMPP  =>  x86result::NotImplemented           ( "fucompp",                                        ),
-              x87::FWAIT    =>  instruction.compileZeroOperand      ( 0x9b,                                             ),
-              x87::FXAM     =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xe5, fpu,  x87expected::Default,   ),
-              x87::FXCH     =>  x86result::NotImplemented           ( "fxch",                                           ),
-              x87::FXCH4    =>  x86result::NotImplemented           ( "fxch4",                                          ),
-              x87::FXCH7    =>  x86result::NotImplemented           ( "fxch7",                                          ),
-              x87::FXRSTOR  =>  x86result::NotImplemented           ( "fxrstor",                                        ),
-              x87::FXSAVE   =>  x86result::NotImplemented           ( "fxsave",                                         ),
-              x87::FXTRACT  =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf4, fpu,  x87expected::Default,   ),
-              x87::FYL2X    =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf1, fpu,  x87expected::Default,   ),
-              x87::FYL2XP1  =>  instruction.compileFloatZeroOperand ( 0x01, false,  0xf9, fpu,  x87expected::Default,   ),
+            {               //  compiler                            ( opcode, fwait?, subcode,  operands, configuration,              fpu,  cpu,  operandSize,  addressSize,  ),
+              x87::F2XM1    =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf0,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FABS     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xe1,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FADD     =>  instruction.compileFloatMath        ( 0xd8,   false,  0,        operands, x87flags::Default,                cpu,  operandSize,  addressSize,  ),
+              x87::FADDP    =>  instruction.compileFloatMath        ( 0xda,   false,  0,        operands, x87flags::DefaultPop,             cpu,  operandSize,  addressSize,  ),
+              x87::FBLD     =>  instruction.compileFloatLoad        (         false,            operands, x87flags::DecimalLoad,            cpu,  operandSize,  addressSize,  ),
+              x87::FBSTP    =>  instruction.compileFloatMath        ( 0xd9,   false,  2,        operands, x87flags::DecimalStorePop,        cpu,  operandSize,  addressSize,  ),
+              x87::FCHS     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xe0,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FCLEX    =>  instruction.compileFloatZeroOperand ( 0xdb,   true,   0xe2,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FCMOVB   =>  instruction.compileFloatCMove       ( 0xda,   false,  0xc0,     operands,                             fpu,                                    ),
+              x87::FCMOVBE  =>  instruction.compileFloatCMove       ( 0xda,   false,  0xd0,     operands,                             fpu,                                    ),
+              x87::FCMOVE   =>  instruction.compileFloatCMove       ( 0xda,   false,  0xc8,     operands,                             fpu,                                    ),
+              x87::FCMOVNB  =>  instruction.compileFloatCMove       ( 0xdb,   false,  0xc0,     operands,                             fpu,                                    ),
+              x87::FCMOVNBE =>  instruction.compileFloatCMove       ( 0xdb,   false,  0xd0,     operands,                             fpu,                                    ),
+              x87::FCMOVNE  =>  instruction.compileFloatCMove       ( 0xdb,   false,  0xc8,     operands,                             fpu,                                    ),
+              x87::FCMOVNU  =>  instruction.compileFloatCMove       ( 0xdb,   false,  0xd8,     operands,                             fpu,                                    ),
+              x87::FCMOVU   =>  instruction.compileFloatCMove       ( 0xda,   false,  0xd8,     operands,                             fpu,                                    ),
+              x87::FCOM     =>  instruction.compileFloatMath        ( 0xd8,   false,  2,        operands, x87flags::LazyCompare,            cpu,  operandSize,  addressSize,  ),
+              x87::FCOMI    =>  instruction.compileFloatRegOperand  ( 0xdb,   false,  0xf0,     operands, x87expected::OverPentium,   fpu,                                    ),
+              x87::FCOMIP   =>  instruction.compileFloatRegOperand  ( 0xdf,   false,  0xf0,     operands, x87expected::OverPentium,   fpu,                                    ),
+              x87::FCOMP    =>  instruction.compileFloatMath        ( 0xd8,   false,  3,        operands, x87flags::LazyCompare,            cpu,  operandSize,  addressSize,  ),
+              x87::FCOMPP   =>  instruction.compileFloatZeroOperand ( 0xde,   false,  0xd9,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FCOS     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xff,     operands, x87expected::Over387,       fpu,                                    ),
+              x87::FDECSTP  =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf6,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FDISI    =>  instruction.compileFloatZeroOperand ( 0xdb,   true,   0xe1,     operands, x87expected::Only8087,      fpu,                                    ),
+              x87::FDIV     =>  instruction.compileFloatMath        ( 0xd8,   false,  6,        operands, x87flags::Default,                cpu,  operandSize,  addressSize,  ),
+              x87::FDIVP    =>  instruction.compileFloatMath        ( 0xda,   false,  6,        operands, x87flags::DefaultPop,             cpu,  operandSize,  addressSize,  ),
+              x87::FDIVR    =>  instruction.compileFloatMath        ( 0xd8,   false,  7,        operands, x87flags::Default,                cpu,  operandSize,  addressSize,  ),
+              x87::FDIVRP   =>  instruction.compileFloatMath        ( 0xda,   false,  7,        operands, x87flags::DefaultPop,             cpu,  operandSize,  addressSize,  ),
+              x87::FENI     =>  instruction.compileFloatZeroOperand ( 0xdb,   true,   0xe0,     operands, x87expected::Only8087,      fpu,                                    ),
+              x87::FFREE    =>  instruction.compileFloatRegOperand  ( 0xdd,   false,  0xc0,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FFREEP   =>  instruction.compileFloatRegOperand  ( 0xdf,   false,  0xc0,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FIADD    =>  instruction.compileFloatMath        ( 0xd8,   false,  0,        operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FICOM    =>  instruction.compileFloatMath        ( 0xd8,   false,  2,        operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FICOMP   =>  instruction.compileFloatMath        ( 0xd8,   false,  3,        operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FIDIV    =>  instruction.compileFloatMath        ( 0xd8,   false,  6,        operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FIDIVR   =>  instruction.compileFloatMath        ( 0xd8,   false,  7,        operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FILD     =>  instruction.compileFloatLoad        (         false,            operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FIMUL    =>  instruction.compileFloatMath        ( 0xd8,   false,  0x01,     operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FINCSTP  =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf7,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FINIT    =>  instruction.compileFloatZeroOperand ( 0xdb,   true,   0xe3,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FIST     =>  instruction.compileFloatMath        ( 0xd9,   false,  2,        operands, x87flags::IntegerStore,           cpu,  operandSize,  addressSize,  ),
+              x87::FISTP    =>  instruction.compileFloatMath        ( 0xd9,   false,  2,        operands, x87flags::IntegerStorePop,        cpu,  operandSize,  addressSize,  ),
+              x87::FISTTP   =>  instruction.compileFloatIntSetTPop  (         false,            operands,                             fpu,  cpu,  operandSize,  addressSize,  ),
+              x87::FISUB    =>  instruction.compileFloatMath        ( 0xd8,   false,  4,        operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FISUBR   =>  instruction.compileFloatMath        ( 0xda,   false,  5,        operands, x87flags::Integer,                cpu,  operandSize,  addressSize,  ),
+              x87::FLD      =>  instruction.compileFloatLoad        (         false,            operands, x87flags::Lazy,                   cpu,  operandSize,  addressSize,  ),
+              x87::FLD1     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xe8,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FLDCW    =>  instruction.compileFloatSimple      ( 0xd9,   true,   5,        operands, x87simple::CW,                    cpu,  operandSize,  addressSize,  ),
+              x87::FLDENV   =>  instruction.compileFloatSimple      ( 0xd9,   false,  4,        operands, x87simple::ENV,                   cpu,  operandSize,  addressSize,  ),
+              x87::FLDL2E   =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xea,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FLDL2T   =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xe9,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FLDLG2   =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xec,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FLDLN2   =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xed,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FLDPI    =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xeb,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FLDZ     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xee,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FMUL     =>  instruction.compileFloatMath        ( 0xd8,   false,  1,        operands, x87flags::Default,                cpu,  operandSize,  addressSize,  ),
+              x87::FMULP    =>  instruction.compileFloatMath        ( 0xda,   false,  1,        operands, x87flags::DefaultPop,             cpu,  operandSize,  addressSize,  ),
+              x87::FNCLEX   =>  instruction.compileFloatZeroOperand ( 0xdb,   false,  0xe2,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FNDISI   =>  instruction.compileFloatZeroOperand ( 0xdb,   false,  0xe1,     operands, x87expected::Only8087,      fpu,                                    ),
+              x87::FNENI    =>  instruction.compileFloatZeroOperand ( 0xdb,   false,  0xe0,     operands, x87expected::Only8087,      fpu,                                    ),
+              x87::FNINIT   =>  instruction.compileFloatZeroOperand ( 0xdb,   false,  0xe3,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FNOP     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xd0,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FNSAVE   =>  instruction.compileFloatSimple      ( 0xdd,   false,  6,        operands, x87simple::SAVE,                  cpu,  operandSize,  addressSize,  ),
+              x87::FNSETPM  =>  instruction.compileFloatZeroOperand ( 0xdb,   true,   0xe4,     operands, x87expected::Only287,       fpu,                                    ),
+              x87::FNSTCW   =>  instruction.compileFloatSimple      ( 0xd9,   false,  7,        operands, x87simple::CW,                    cpu,  operandSize,  addressSize,  ),
+              x87::FNSTENV  =>  instruction.compileFloatSimple      ( 0xd9,   false,  6,        operands, x87simple::ENV,                   cpu,  operandSize,  addressSize,  ),
+              x87::FNSTSW   =>  instruction.compileFloatSimple      ( 0xdd,   false,  7,        operands, x87simple::SW,                    cpu,  operandSize,  addressSize,  ),
+              x87::FPATAN   =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf3,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FPREM    =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf8,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FPREM1   =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf5,     operands, x87expected::Over387,       fpu,                                    ),
+              x87::FPTAN    =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf2,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FRNDINT  =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xfc,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FRSTOR   =>  instruction.compileFloatSimple      ( 0xdd,   false,  4,        operands, x87simple::SAVE,                  cpu,  operandSize,  addressSize,  ),
+              x87::FSAVE    =>  instruction.compileFloatSimple      ( 0xdd,   true,   6,        operands, x87simple::SAVE,                  cpu,  operandSize,  addressSize,  ),
+              x87::FSCALE   =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xfd,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FSIN     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xfe,     operands, x87expected::Over387,       fpu,                                    ),
+              x87::FSINCOS  =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xfb,     operands, x87expected::Over387,       fpu,                                    ),
+              x87::FSQRT    =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xfa,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FST      =>  instruction.compileFloatMath        ( 0xd9,   false,  2,        operands, x87flags::DefaultStore,           cpu,  operandSize,  addressSize,  ),
+              x87::FSTCW    =>  instruction.compileFloatSimple      ( 0xd9,   true,   7,        operands, x87simple::CW,                    cpu,  operandSize,  addressSize,  ),
+              x87::FSTENV   =>  instruction.compileFloatSimple      ( 0xd9,   true,   6,        operands, x87simple::ENV,                   cpu,  operandSize,  addressSize,  ),
+              x87::FSTP     =>  instruction.compileFloatMath        ( 0xd9,   false,  3,        operands, x87flags::DefaultStorePop,        cpu,  operandSize,  addressSize,  ),
+              x87::FSTSW    =>  instruction.compileFloatSimple      ( 0xdd,   true,   7,        operands, x87simple::SW,                    cpu,  operandSize,  addressSize,  ),
+              x87::FSUB     =>  instruction.compileFloatMath        ( 0xd8,   false,  4,        operands, x87flags::Default,                cpu,  operandSize,  addressSize,  ),
+              x87::FSUBP    =>  instruction.compileFloatMath        ( 0xda,   false,  4,        operands, x87flags::DefaultPop,             cpu,  operandSize,  addressSize,  ),
+              x87::FSUBR    =>  instruction.compileFloatMath        ( 0xd8,   false,  5,        operands, x87flags::Default,                cpu,  operandSize,  addressSize,  ),
+              x87::FSUBRP   =>  instruction.compileFloatMath        ( 0xda,   false,  5,        operands, x87flags::DefaultPop,             cpu,  operandSize,  addressSize,  ),
+              x87::FTST     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xe4,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FUCOM    =>  instruction.compileFloatRegOperand  ( 0xdd,   false,  0xe0,     operands, x87expected::Over387,       fpu,                                    ),
+              x87::FUCOMI   =>  instruction.compileFloatRegOperand  ( 0xdb,   false,  0xe8,     operands, x87expected::OverPentium,   fpu,                                    ),
+              x87::FUCOMIP  =>  instruction.compileFloatRegOperand  ( 0xdf,   false,  0xe8,     operands, x87expected::OverPentium,   fpu,                                    ),
+              x87::FUCOMP   =>  instruction.compileFloatRegOperand  ( 0xdd,   false,  0xe8,     operands, x87expected::Over387,       fpu,                                    ),
+              x87::FUCOMPP  =>  instruction.compileFloatZeroOperand ( 0xda,   false,  0xe9,     operands, x87expected::Over387,       fpu,                                    ),
+              x87::FWAIT    =>  instruction.compileZeroOperand      ( 0x9b,                     operands,                                                                     ),
+              x87::FXAM     =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xe5,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FXCH     =>  instruction.compileFloatRegOperand  ( 0xd9,   false,  0xc8,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FXTRACT  =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf4,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FYL2X    =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf1,     operands, x87expected::Default,       fpu,                                    ),
+              x87::FYL2XP1  =>  instruction.compileFloatZeroOperand ( 0xd9,   false,  0xf9,     operands, x87expected::Default,       fpu,                                    ),
             };
           self.x86processResult
           (
@@ -220,8 +311,6 @@ pub enum      x87
   FCOMI,
   FCOMIP,
   FCOMP,
-  FCOMP3,
-  FCOMP5,
   FCOMPP,
   FCOS,
   FDECSTP,
@@ -284,9 +373,6 @@ pub enum      x87
   FSTCW,
   FSTENV,
   FSTP,
-  FSTP1,
-  FSTP8,
-  FSTP9,
   FSTSW,
   FSUB,
   FSUBP,
@@ -301,10 +387,6 @@ pub enum      x87
   FWAIT,
   FXAM,
   FXCH,
-  FXCH4,
-  FXCH7,
-  FXRSTOR,
-  FXSAVE,
   FXTRACT,
   FYL2X,
   FYL2XP1,
@@ -315,8 +397,162 @@ pub enum      x87
 pub enum      x87expected
 {
   Default,
-  Only8087,
-  Over80387,
+  Only                                  ( x87version  ),
+  Minimal                               ( x87version  ),
+}
+
+impl          x87expected
+{
+  pub const Only8087:             Self  =   x87expected::Only    ( x87version::i8087    );
+  pub const Only287:              Self  =   x87expected::Only    ( x87version::i287     );
+  pub const Over387:              Self  =   x87expected::Minimal ( x87version::i387     );
+  pub const OverPentium:          Self  =   x87expected::Minimal ( x87version::Pentium  );
+}
+
+impl          x87expected
+{
+  pub fn result
+  (
+    self,
+    version:                            x87version,
+    instruction:                        x86instruction,
+    
+  )
+  ->  x86result
+  {
+    match self
+    {
+      x87expected::Default
+      =>  x86result::Done   ( instruction ),
+      x87expected::Only     ( expected    )
+      =>  if  false //  TODO: Flag To Disable This Warning
+          {
+            x86result::Done ( instruction )
+          }
+          else
+          {
+            x86result::Warn
+            (
+              instruction,
+              vec!
+              (
+                format!
+                (
+                  "This Instruction Is Equivalent To `fnop`, Unless x87-Version Is {}.",
+                  expected.name ( ),
+                )
+              ),
+            )
+          },
+      x87expected::Minimal  ( expected  )
+      =>  if  version >=  expected
+          {
+            x86result::Done ( instruction )
+          }
+          else
+          {
+            x86result::WrongVersion
+            {
+              have:                     version,
+              want:                     expected,
+            }
+          },
+    }
+  }
+}
+
+bitflags!
+{
+  #[allow(non_camel_case_types)]
+  pub struct  x87flags:                 usize
+  {
+    const Float                         =   0b0000_0000_0001;
+    const Stack                         =   0b0000_0000_0010;
+    const Integer                       =   0b0000_0000_0100;
+    const Decimal                       =   0b0000_0000_1000;
+
+    const Store                         =   0b0000_0001_0000;
+    const Compare                       =   0b0000_0010_0000;
+    const Pop                           =   0b0000_0100_0000;
+
+    const FloatStack                    =   Self::Float.bits  | Self::Stack.bits                                                                                    ;
+    const Default                       =   Self::Float.bits  | Self::Stack.bits  | Self::Integer.bits                                                              ;
+    const DefaultPop                    =                       Self::Stack.bits  | Self::Integer.bits  | Self::Decimal.bits  |                       Self::Pop.bits;
+    const DefaultStore                  =   Self::Float.bits  | Self::Stack.bits  | Self::Integer.bits  | Self::Decimal.bits  | Self::Store.bits                    ;
+    const DefaultStorePop               =   Self::Float.bits  | Self::Stack.bits  | Self::Integer.bits  | Self::Decimal.bits  | Self::Store.bits    | Self::Pop.bits;
+    const IntegerStore                  =                                           Self::Integer.bits  |                       Self::Store.bits                    ;
+    const IntegerStorePop               =                                           Self::Integer.bits  |                       Self::Store.bits    | Self::Pop.bits;
+    const DecimalLoad                   =                                                                 Self::Decimal.bits                                        ;
+    const DecimalStorePop               =                                                                 Self::Decimal.bits  | Self::Store.bits    | Self::Pop.bits;
+    const Lazy                          =   Self::Float.bits  | Self::Stack.bits  | Self::Integer.bits  | Self::Decimal.bits                                        ;
+    const LazyCompare                   =   Self::Float.bits  | Self::Stack.bits  | Self::Integer.bits  | Self::Decimal.bits  | Self::Compare.bits                  ;
+  }
+}
+
+impl          x87flags
+{
+  pub fn  isCompare
+  (
+    &self,
+  )
+  ->  bool
+  {
+     ( self.bits  & Self::Compare.bits  ) !=  0
+  }
+
+  pub fn  isDecimal
+  (
+    &self,
+  )
+  ->  bool
+  {
+     ( self.bits  & Self::Decimal.bits  ) !=  0
+  }
+
+  pub fn  isFloat
+  (
+    &self,
+  )
+  ->  bool
+  {
+     ( self.bits  & Self::Float.bits    ) !=  0
+  }
+
+  pub fn  isInteger
+  (
+    &self,
+  )
+  ->  bool
+  {
+     ( self.bits  & Self::Integer.bits  ) !=  0
+  }
+
+  pub fn  isPop
+  (
+    &self,
+  )
+  ->  bool
+  {
+     ( self.bits  & Self::Pop.bits      ) !=  0
+  }
+
+  pub fn  isStack
+  (
+    &self,
+  )
+  ->  bool
+  {
+     ( self.bits  & Self::Stack.bits    ) !=  0
+  }
+
+  pub fn  isStore
+  (
+    &self,
+  )
+  ->  bool
+  {
+     ( self.bits  & Self::Store.bits    ) !=  0
+  }
 }
 
 #[allow(non_camel_case_types)]
@@ -327,6 +563,7 @@ pub enum      x87version
   i8087,
   i287,
   i387,
+  Pentium,
 }
 
 impl          x87version
@@ -339,10 +576,11 @@ impl          x87version
   {
     match self
     {
-      x87version::None  =>  "None",
-      x87version::i8087 =>  "8087",
-      x87version::i287  =>  "80287",
-      x87version::i387  =>  "80387",
+      x87version::None    =>  "None",
+      x87version::i8087   =>  "8087",
+      x87version::i287    =>  "80287",
+      x87version::i387    =>  "80387",
+      x87version::Pentium =>  "Pentium",
     }
   }
 }

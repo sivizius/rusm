@@ -1,5 +1,9 @@
 pub use super::
 {
+  asm::
+  {
+    asmType,
+  },
   operands::
   {
     Operand,
@@ -261,3 +265,28 @@ impl        SymbolList
 }
 
 pub type    SymbolReference             =   usize;
+
+
+#[derive(Clone,Debug)]
+pub struct    Variable
+{
+  reference:                            SymbolReference,
+  dataType:                             asmType,
+  default:                              OperandType,
+}
+
+pub fn        Variable
+(
+  reference:                            SymbolReference,
+  dataType:                             asmType,
+  default:                              OperandType,
+)
+->  Variable
+{
+  Variable
+  {
+    reference,
+    dataType,
+    default,
+  }
+}

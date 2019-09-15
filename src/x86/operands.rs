@@ -15,6 +15,7 @@ use super::
     asm::
     {
       asm,
+      asmKind,
     },
     expressions::
     {
@@ -49,6 +50,7 @@ pub enum      x86operand
   },
   Memory16
   {
+    kind:                               asmKind,
     size:                               usize,
     segment:                            SegmentRegisterNumber,
     registers:                          Memory16Registers,
@@ -86,6 +88,7 @@ impl          x86operand
     {
       x86operand::Memory16
       {
+        kind,
         size,
         segment,
         registers:                      _,
@@ -103,29 +106,101 @@ impl          x86operand
               match ( mulBX,  mulBP,  mulSI,  mulDI,  segment )
               {
                 ( 1,  0,  1,  0,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::BXSI, displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::BXSI,  displacement: *value  } )
+                      )
+                    ),
                 ( 1,  0,  0,  1,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::BXDI, displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::BXDI,  displacement: *value  } )
+                      )
+                    ),
                 ( 0,  1,  1,  0,  SegmentRegisterNumber::DefaultDS  )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment:  SegmentRegisterNumber::DefaultSS, registers: Memory16Registers::BPSI, displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment:  SegmentRegisterNumber::DefaultSS, registers:  Memory16Registers::BPSI,  displacement: *value  } )
+                      )
+                    ),
                 ( 0,  1,  1,  0,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::BPSI, displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::BPSI,  displacement: *value  } )
+                      )
+                    ),
                 ( 0,  1,  0,  1,  SegmentRegisterNumber::DefaultDS  )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment:  SegmentRegisterNumber::DefaultSS, registers: Memory16Registers::BPDI, displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment:  SegmentRegisterNumber::DefaultSS, registers:  Memory16Registers::BPDI,  displacement: *value  } )
+                      )
+                    ),
                 ( 0,  1,  0,  1,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::BPDI, displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::BPDI,  displacement: *value  } )
+                      )
+                    ),
                 ( 0,  0,  1,  0,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::SI,   displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::SI,    displacement: *value  } )
+                      )
+                    ),
                 ( 0,  0,  0,  1,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::DI,   displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::DI,    displacement: *value  } )
+                      )
+                    ),
                 ( 0,  1,  0,  0,  SegmentRegisterNumber::DefaultDS  )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment:  SegmentRegisterNumber::DefaultSS, registers: Memory16Registers::BP,   displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment:  SegmentRegisterNumber::DefaultSS, registers:  Memory16Registers::BP,    displacement: *value  } )
+                      )
+                    ),
                 ( 0,  1,  0,  0,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::BP,   displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::BP,    displacement: *value  } )
+                      )
+                    ),
                 ( 1,  0,  0,  0,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::BX,   displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::BX,    displacement: *value  } )
+                      )
+                    ),
                 ( 0,  0,  0,  0,  _                               )
-                =>  Ok  ( vec!  ( ExpressionToken::x86  ( x86operand::Memory16 { size,  segment,                                    registers: Memory16Registers::DISP, displacement: *value  } ) ) ),
+                =>  Ok
+                    (
+                      vec!
+                      (
+                        ExpressionToken::x86  ( x86operand::Memory16  { kind, size, segment,                                    registers:  Memory16Registers::DISP,  displacement: *value  } )
+                      )
+                    ),
                 ( _,  _,  _,  _,  _                               )
                 =>  {
                       println!  ( "{}·Bx + {}·BP + {}·SI + {}·DI + {}", mulBX,  mulBP,  mulSI,  mulDI,  value );
@@ -230,6 +305,7 @@ impl          x86operand
           },
       x86operand::Memory16
       {
+        kind,
         size,
         segment,
         registers,
@@ -238,13 +314,51 @@ impl          x86operand
       =>  format!
           (
             "{} {}:[ {}{} ]",
-            match *size
+            match kind
             {
-              asm::Byte   =>  "byte".to_string  ( ),
-              asm::Word   =>  "word".to_string  ( ),
-              asm::DWord  =>  "dword".to_string ( ),
-              asm::QWord  =>  "qword".to_string ( ),
-              _           =>  format! ( "{}", size ),
+              asmKind::Pointer
+              =>  format!
+                  (
+                    "ptr{}",
+                    if  *size ==  asm::Null
+                    {
+                      "".to_string ( )
+                    }
+                    else
+                    {
+                      format!
+                      (
+                        " {}",
+                        asm::formatSize ( *size ),
+                      )
+                    },
+                  ),
+              asmKind::Integer
+              =>  asm::formatSize       ( *size ),
+              asmKind::Unsigned
+              =>  format!
+                  (
+                    "u{}",
+                    *size * 8,
+                  ),
+              asmKind::Signed
+              =>  format!
+                  (
+                    "s{}",
+                    *size * 8,
+                  ),
+              asmKind::IEEE754
+              =>  format!
+                  (
+                    "f{}",
+                    *size * 8,
+                  ),
+              asmKind::BCD
+              =>  format!
+                  (
+                    "bcd{}",
+                    *size,
+                  ),
             },
             segment.format  ( ),
             displacement,
@@ -353,6 +467,7 @@ impl          Operand                   for x86operand
         }                               =>  size,
         x86operand::Memory16
         {
+          kind:                         _,
           size,
           segment:                      _,
           registers:                    _,
